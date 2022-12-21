@@ -133,7 +133,48 @@ Install the needed toolchains:
 ```bash
 pacman -S --needed base-devel mingw-w64-i686-toolchain mingw-w64-x86_64-toolchain git subversion mingw-w64-i686-cmake mingw-w64-x86_64-cmake
 ```
-Implementation of Attention-based Uni-Enhancement and Bi-Prediction Network
+
+Implementation
 ==============================
-- source/Lib/CommonLib
-  InterPrediction.cpp
+
+Modified Files
+---------------------------
+- ./
+
+  CMakeLists.txt
+
+- ./source/Lib/CommonLib
+
+  InterPrediction.cpp, CMakeLists.txt
+  
+- ./source/Lib/CommonAnalyserLib
+
+  CMakeLists.txt
+  
+Pytorch
+---------------------------
+Library Torch 1.8.1 CUDA 10.2
+
+Locate the library directory to '../../Libraries/libtorch'
+
+Models
+---------------------------
+- Uni-Enhancement Models (Teacher models for five QPs)
+
+  ./model/att_uni_prediction_q22.pt
+  
+  ./model/att_uni_prediction_q27.pt
+  
+  ./model/att_uni_prediction_q32.pt
+  
+  ./model/att_uni_prediction_q37.pt
+  
+  ./model/att_uni_prediction_q42.pt
+  
+- Bi-Prediction Model (One teacher model)
+
+  ./model/bi_prediction_abpn_one_t.pt
+  
+You have to modify the model path in source code.
+
+(./source/Lib/CommonLib/InterPrediction.cpp lines 1378 and 1789) 
