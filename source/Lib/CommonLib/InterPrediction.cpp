@@ -1375,7 +1375,7 @@ void InterPrediction::xWeightedAverage(const PredictionUnit& pu, const CPelUnitB
   int           slice_qp_value = pu.cs->slice->getSliceQp();
 
   std::string model_name = "bi_prediction_abpn_one_t";
-    std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/model/"
+  std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/model/"
                              + model_name + ".pt";
 
   at::Device device = at::kCUDA;
