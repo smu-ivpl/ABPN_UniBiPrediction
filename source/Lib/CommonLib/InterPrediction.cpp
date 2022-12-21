@@ -1375,7 +1375,7 @@ void InterPrediction::xWeightedAverage(const PredictionUnit& pu, const CPelUnitB
   int           slice_qp_value = pu.cs->slice->getSliceQp();
 
   std::string model_name = "bi_prediction_abpn_one_t";
-    std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc_BiPrediction_Deep/model_one/"
+    std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/model/"
                              + model_name + ".pt";
 
   at::Device device = at::kCUDA;
@@ -1786,7 +1786,7 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
         model_qp = 42;
         qp_diff = abs(base_qp - 42);
     }
-    std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc_BiPrediction_Deep/model_att_enhance_uni/"
+    std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/model/"
                                  + model_name + "_q" + to_string(model_qp) + ".pt";
     at::Device device = at::kCUDA;
 //        at::Device device = at::kCPU;
