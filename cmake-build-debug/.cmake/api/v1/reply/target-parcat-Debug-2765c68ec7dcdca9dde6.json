@@ -1,0 +1,794 @@
+{
+	"artifacts" : 
+	[
+		{
+			"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/bin/ninja/gcc-7.5/x86_64/debug/parcat"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_executable",
+			"target_link_libraries",
+			"set_target_properties",
+			"include",
+			"find_package",
+			"set_property",
+			"bb_multithreading",
+			"add_compile_options",
+			"bb_enable_warnings",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"source/App/Parcat/CMakeLists.txt",
+			"source/Lib/CommonLib/CMakeLists.txt",
+			"/home/media/Libraries/libtorch/share/cmake/Caffe2/Caffe2Targets.cmake",
+			"/home/media/Libraries/libtorch/share/cmake/Caffe2/Caffe2Config.cmake",
+			"/home/media/Libraries/libtorch/share/cmake/Torch/TorchConfig.cmake",
+			"CMakeLists.txt",
+			"/home/media/Libraries/libtorch/share/cmake/Caffe2/public/cuda.cmake",
+			"/snap/clion/219/bin/cmake/linux/share/cmake-3.24/Modules/FindThreads.cmake",
+			"cmake/CMakeBuild/cmake/modules/BBuildEnv.cmake"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 11,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 13,
+				"parent" : 0
+			},
+			{
+				"file" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 67,
+				"parent" : 3
+			},
+			{
+				"file" : 5
+			},
+			{
+				"command" : 4,
+				"file" : 5,
+				"line" : 61,
+				"parent" : 5
+			},
+			{
+				"file" : 4,
+				"parent" : 6
+			},
+			{
+				"command" : 4,
+				"file" : 4,
+				"line" : 68,
+				"parent" : 7
+			},
+			{
+				"file" : 3,
+				"parent" : 8
+			},
+			{
+				"command" : 3,
+				"file" : 3,
+				"line" : 116,
+				"parent" : 9
+			},
+			{
+				"file" : 2,
+				"parent" : 10
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 79,
+				"parent" : 11
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 98,
+				"parent" : 11
+			},
+			{
+				"command" : 3,
+				"file" : 3,
+				"line" : 88,
+				"parent" : 9
+			},
+			{
+				"file" : 6,
+				"parent" : 14
+			},
+			{
+				"command" : 5,
+				"file" : 6,
+				"line" : 325,
+				"parent" : 15
+			},
+			{
+				"command" : 5,
+				"file" : 6,
+				"line" : 363,
+				"parent" : 15
+			},
+			{
+				"command" : 2,
+				"file" : 2,
+				"line" : 116,
+				"parent" : 11
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 71,
+				"parent" : 3
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 72,
+				"parent" : 3
+			},
+			{
+				"command" : 1,
+				"file" : 1,
+				"line" : 90,
+				"parent" : 3
+			},
+			{
+				"command" : 6,
+				"file" : 5,
+				"line" : 56,
+				"parent" : 5
+			},
+			{
+				"command" : 4,
+				"file" : 8,
+				"line" : 494,
+				"parent" : 22
+			},
+			{
+				"file" : 7,
+				"parent" : 23
+			},
+			{
+				"command" : 5,
+				"file" : 7,
+				"line" : 242,
+				"parent" : 24
+			},
+			{
+				"command" : 8,
+				"file" : 5,
+				"line" : 87,
+				"parent" : 5
+			},
+			{
+				"command" : 7,
+				"file" : 8,
+				"line" : 523,
+				"parent" : 26
+			},
+			{
+				"command" : 7,
+				"file" : 8,
+				"line" : 523,
+				"parent" : 26
+			},
+			{
+				"command" : 7,
+				"file" : 8,
+				"line" : 523,
+				"parent" : 26
+			},
+			{
+				"command" : 7,
+				"file" : 8,
+				"line" : 523,
+				"parent" : 26
+			},
+			{
+				"command" : 7,
+				"file" : 8,
+				"line" : 523,
+				"parent" : 26
+			},
+			{
+				"command" : 7,
+				"file" : 5,
+				"line" : 112,
+				"parent" : 5
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 16,
+				"parent" : 0
+			},
+			{
+				"command" : 9,
+				"file" : 0,
+				"line" : 18,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : " -D_GLIBCXX_USE_CXX11_ABI=1 -fopenmp -g -fPIE -fdiagnostics-color=always"
+				},
+				{
+					"backtrace" : 27,
+					"fragment" : "-Wall"
+				},
+				{
+					"backtrace" : 28,
+					"fragment" : "-fdiagnostics-show-option"
+				},
+				{
+					"backtrace" : 29,
+					"fragment" : "-Werror"
+				},
+				{
+					"backtrace" : 30,
+					"fragment" : "-Wno-sign-compare"
+				},
+				{
+					"backtrace" : 31,
+					"fragment" : "-Wno-class-memaccess"
+				},
+				{
+					"backtrace" : 32,
+					"fragment" : "-msse4.1"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-D_GLIBCXX_USE_CXX11_ABI=1"
+				},
+				{
+					"backtrace" : 2,
+					"fragment" : "-pthread"
+				},
+				{
+					"fragment" : "-std=gnu++14"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"backtrace" : 33,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/cmake-build-debug/source/App/Parcat"
+				},
+				{
+					"backtrace" : 34,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/source/Lib"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/source/Lib/CommonLib/."
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/source/Lib/CommonLib/.."
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/source/Lib/CommonLib/./x86"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/source/Lib/CommonLib/../libmd5"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/source/Lib/DecoderLib/."
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/source/Lib/Utilities/."
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/source/Lib/Utilities/.."
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/media/Libraries/libtorch/include"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/home/media/Libraries/libtorch/include/torch/csrc/api/include"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/usr/local/cuda/include"
+				},
+				{
+					"backtrace" : 2,
+					"isSystem" : true,
+					"path" : "/usr/local/include/opencv4"
+				}
+			],
+			"language" : "CXX",
+			"languageStandard" : 
+			{
+				"backtraces" : 
+				[
+					2
+				],
+				"standard" : "14"
+			},
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"backtrace" : 2,
+			"id" : "CommonLib::@bf1184d7f3aab627351b"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "DecoderLib::@a2594b0b1ec318aa6202"
+		},
+		{
+			"backtrace" : 2,
+			"id" : "Utilities::@22506e0f2c08d681b925"
+		}
+	],
+	"folder" : 
+	{
+		"name" : "app"
+	},
+	"id" : "parcat::@77d567c5afdb55d0a664",
+	"link" : 
+	{
+		"commandFragments" : 
+		[
+			{
+				"fragment" : "-D_GLIBCXX_USE_CXX11_ABI=1 -fopenmp -g",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "",
+				"role" : "flags"
+			},
+			{
+				"fragment" : "-Wl,-rpath,/home/media/Libraries/libtorch/lib:/usr/local/cuda/lib64:/usr/local/cuda/lib64/stubs:/usr/local/lib",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/lib/ninja/gcc-7.5/x86_64/debug/libCommonLib.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/lib/ninja/gcc-7.5/x86_64/debug/libDecoderLib.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/lib/ninja/gcc-7.5/x86_64/debug/libUtilities.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 2,
+				"fragment" : "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/lib/ninja/gcc-7.5/x86_64/debug/libCommonLib.a",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "/home/media/Libraries/libtorch/lib/libtorch.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 12,
+				"fragment" : "-Wl,--no-as-needed,\"/home/media/Libraries/libtorch/lib/libtorch_cpu.so\" -Wl,--as-needed",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 13,
+				"fragment" : "-Wl,--no-as-needed,\"/home/media/Libraries/libtorch/lib/libtorch_cuda.so\" -Wl,--as-needed",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 13,
+				"fragment" : "/home/media/Libraries/libtorch/lib/libc10_cuda.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 12,
+				"fragment" : "/home/media/Libraries/libtorch/lib/libc10.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 16,
+				"fragment" : "/usr/local/cuda/lib64/libcufft.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 13,
+				"fragment" : "/usr/local/cuda/lib64/libcurand.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 17,
+				"fragment" : "/usr/lib/x86_64-linux-gnu/libcublas.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 13,
+				"fragment" : "/usr/local/cuda/lib64/libcudnn.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 18,
+				"fragment" : "-Wl,--no-as-needed,\"/home/media/Libraries/libtorch/lib/libtorch.so\" -Wl,--as-needed",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "/home/media/Libraries/libtorch/lib/libc10.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "/usr/local/cuda/lib64/stubs/libcuda.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "/usr/local/cuda/lib64/libnvrtc.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "/usr/local/cuda/lib64/libnvToolsExt.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "/usr/local/cuda/lib64/libcudart.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 4,
+				"fragment" : "/home/media/Libraries/libtorch/lib/libc10_cuda.so",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_gapi.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_stitching.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_alphamat.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_aruco.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_bgsegm.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_bioinspired.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_ccalib.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_dnn_objdetect.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_dnn_superres.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_dpm.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_highgui.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_face.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_freetype.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_fuzzy.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_hfs.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_img_hash.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_intensity_transform.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_line_descriptor.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_mcc.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_quality.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_rapid.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_reg.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_rgbd.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_saliency.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_stereo.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_structured_light.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_phase_unwrapping.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_superres.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_optflow.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_surface_matching.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_tracking.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_datasets.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_plot.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_text.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_dnn.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_videostab.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_videoio.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_xfeatures2d.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_ml.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_shape.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_ximgproc.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_video.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_xobjdetect.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_imgcodecs.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_objdetect.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_calib3d.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_features2d.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_flann.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_xphoto.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_photo.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_imgproc.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 19,
+				"fragment" : "/usr/local/lib/libopencv_core.so.4.5.0",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 20,
+				"fragment" : "-lstdc++fs",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 21,
+				"fragment" : "/usr/lib/gcc/x86_64-linux-gnu/7/libgomp.so",
+				"role" : "libraries"
+			},
+			{
+				"fragment" : "-lpthread",
+				"role" : "libraries"
+			},
+			{
+				"backtrace" : 25,
+				"fragment" : "-pthread",
+				"role" : "libraries"
+			}
+		],
+		"language" : "CXX"
+	},
+	"name" : "parcat",
+	"nameOnDisk" : "parcat",
+	"paths" : 
+	{
+		"build" : "source/App/Parcat",
+		"source" : "source/App/Parcat"
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 0,
+			"path" : "source/App/Parcat/parcat.cpp",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "EXECUTABLE"
+}

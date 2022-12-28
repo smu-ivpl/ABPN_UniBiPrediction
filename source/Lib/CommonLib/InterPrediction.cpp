@@ -1767,24 +1767,24 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
     int cu_size = cu_w * cu_h;
 
     std::string model_name = "att_uni_prediction";
-    int base_qp   = pu.cs->baseQP;
+    int slice_qp = pu.cs->slice->getSliceQp();
     int model_qp  = 22;
-    int qp_diff   = abs(base_qp - 22);
-    if (abs(base_qp - 27) < qp_diff){
+    int qp_diff   = abs(slice_qp - 22);
+    if (abs(slice_qp - 27) < qp_diff){
         model_qp = 27;
-        qp_diff = abs(base_qp - 27);
+        qp_diff = abs(slice_qp - 27);
     }
-    if (abs(base_qp - 32) < qp_diff){
+    if (abs(slice_qp - 32) < qp_diff){
         model_qp = 32;
-        qp_diff = abs(base_qp - 32);
+        qp_diff = abs(slice_qp - 32);
     }
-    if (abs(base_qp - 37) < qp_diff){
+    if (abs(slice_qp - 37) < qp_diff){
         model_qp = 37;
-        qp_diff = abs(base_qp - 37);
+        qp_diff = abs(slice_qp - 37);
     }
-    if (abs(base_qp - 42) < qp_diff){
+    if (abs(slice_qp - 42) < qp_diff){
         model_qp = 42;
-        qp_diff = abs(base_qp - 42);
+        qp_diff = abs(slice_qp - 42);
     }
     std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/model/"
                                  + model_name + "_q" + to_string(model_qp) + ".pt";
