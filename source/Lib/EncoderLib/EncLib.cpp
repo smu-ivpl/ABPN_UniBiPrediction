@@ -456,6 +456,24 @@ void EncLib::init( bool isFieldCoding, AUWriterIf* auWriterIf )
                      , &m_cReshaper
   );
 
+  // yw.lee ============================================================================================================
+  bool useGpu = true;
+  int nGpu = 1;
+  this->m_pTorchHelperBi = new PyTorchHelper("../model/bi_prediction_abpn_one_t.pt", useGpu, nGpu);
+  this->m_pTorchHelperUni[0] = new PyTorchHelper("../model/att_uni_prediction_q22.pt", useGpu, nGpu);
+  this->m_pTorchHelperUni[1] = new PyTorchHelper("../model/att_uni_prediction_q27.pt", useGpu, nGpu);
+  this->m_pTorchHelperUni[2] = new PyTorchHelper("../model/att_uni_prediction_q32.pt", useGpu, nGpu);
+  this->m_pTorchHelperUni[3] = new PyTorchHelper("../model/att_uni_prediction_q37.pt", useGpu, nGpu);
+  this->m_pTorchHelperUni[4] = new PyTorchHelper("../model/att_uni_prediction_q42.pt", useGpu, nGpu);
+
+  m_cInterSearch.m_pTorchHelperBi = this->m_pTorchHelperBi;
+  m_cInterSearch.m_pTorchHelperUni[0] = this->m_pTorchHelperUni[0];
+  m_cInterSearch.m_pTorchHelperUni[1] = this->m_pTorchHelperUni[1];
+  m_cInterSearch.m_pTorchHelperUni[2] = this->m_pTorchHelperUni[2];
+  m_cInterSearch.m_pTorchHelperUni[3] = this->m_pTorchHelperUni[3];
+  m_cInterSearch.m_pTorchHelperUni[4] = this->m_pTorchHelperUni[4];
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
   // link temporary buffets from intra search with inter search to avoid unneccessary memory overhead
   m_cInterSearch.setTempBuffers( m_cIntraSearch.getSplitCSBuf(), m_cIntraSearch.getFullCSBuf(), m_cIntraSearch.getSaveCSBuf() );
 #endif // ENABLE_SPLIT_PARALLELISM || ENABLE_WPP_PARALLELISM

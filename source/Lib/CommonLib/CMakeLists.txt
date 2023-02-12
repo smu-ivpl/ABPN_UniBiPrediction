@@ -41,7 +41,7 @@ file( GLOB MD5_INC_FILES "../libmd5/*.h" )
 set( SRC_FILES ${BASE_SRC_FILES} ${X86_SRC_FILES} ${SSE41_SRC_FILES} ${SSE42_SRC_FILES} ${AVX_SRC_FILES} ${AVX2_SRC_FILES} ${MD5_SRC_FILES} )
 
 # get all include files
-set( INC_FILES ${BASE_INC_FILES} ${X86_INC_FILES} ${MD5_INC_FILES} )
+set( INC_FILES ${BASE_INC_FILES} ${X86_INC_FILES} ${MD5_INC_FILES} PyTorchHelper.cpp PyTorchHelper.h)
 
 
 # library

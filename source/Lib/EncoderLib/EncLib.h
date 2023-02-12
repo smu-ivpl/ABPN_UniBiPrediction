@@ -58,6 +58,8 @@
 #include "EncAdaptiveLoopFilter.h"
 #include "RateCtrl.h"
 
+#include "PyTorchHelper.h"
+
 class EncLibCommon;
 
 //! \ingroup EncoderLib
@@ -70,6 +72,11 @@ class EncLibCommon;
 /// encoder class
 class EncLib : public EncCfg
 {
+public:
+  // yw.lee ==================================
+  PyTorchHelper *m_pTorchHelperUni[5] = { nullptr, };
+  PyTorchHelper *m_pTorchHelperBi = nullptr;
+  ////////////////////////////////////////////
 private:
   // picture
   int                       m_iPOCLast;                           ///< time index (POC)

@@ -1374,10 +1374,10 @@ void InterPrediction::xWeightedAverage(const PredictionUnit& pu, const CPelUnitB
   int           cu_size   = cu_w * cu_h;
   int           slice_qp_value = pu.cs->slice->getSliceQp();
 
-  std::string model_name = "bi_prediction_abpn_one_t";
-  std::string model_path = "../model/" + model_name + ".pt";
+//  std::string model_name = "bi_prediction_abpn_one_t";
+//  std::string model_path = "../model/" + model_name + ".pt";
 
-  at::Device device = at::kCUDA;
+//  at::Device device = at::kCUDA;
 //  at::Device device = at::kCPU;
    
   if( iRefIdx0 >= 0 && iRefIdx1 >= 0 )
@@ -1454,10 +1454,10 @@ void InterPrediction::xWeightedAverage(const PredictionUnit& pu, const CPelUnitB
 
       torch::Tensor input_tensor_0 =
         torch::from_blob(normal_img_src0.data, { 1, normal_img_src0.rows, normal_img_src0.cols, 1 }, torch::kFloat)
-          .to(device);
+          .to(m_pTorchHelperBi->device);
       torch::Tensor input_tensor_1 =
         torch::from_blob(normal_img_src1.data, { 1, normal_img_src1.rows, normal_img_src1.cols, 1 }, torch::kFloat)
-          .to(device);
+          .to(m_pTorchHelperBi->device);
       torch::Tensor qp_tensor = torch::zeros_like(input_tensor_0);
       qp_tensor.fill_((float) (slice_qp_value / 51.)); // [1, height, width, channel(1)]
       torch::Tensor input_tensor = torch::cat({ input_tensor_0, input_tensor_1, qp_tensor });
@@ -1469,23 +1469,23 @@ void InterPrediction::xWeightedAverage(const PredictionUnit& pu, const CPelUnitB
       normal_img_src0.release();
       normal_img_src1.release();
 
-      torch::jit::script::Module module;
-      try
-      {
-        module = torch::jit::load(model_path, device);
-        module.eval();
-      }
-      catch (const c10::Error &e)
-      {
-        std::cerr << "error loading the model\n";
-      }
+//      torch::jit::script::Module module;
+//      try
+//      {
+//        module = torch::jit::load(model_path, device);
+//        module.eval();
+//      }
+//      catch (const c10::Error &e)
+//      {
+//        std::cerr << "error loading the model\n";
+//      }
 
       try
       {
         at::Tensor output_net;
         try
         {
-          auto output_net_ = module.forward(input_tensors_final);
+          auto output_net_ = m_pTorchHelperBi->model.forward(input_tensors_final);
           output_net       = output_net_.toTensor();
         }
         catch (const c10::Error &e)
@@ -1765,29 +1765,34 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
     int cu_h    = predBuf.bufs[0].height;
     int cu_size = cu_w * cu_h;
 
-    std::string model_name = "att_uni_prediction";
+    //std::string model_name = "att_uni_prediction";
     int slice_qp = pu.cs->slice->getSliceQp();
-    int model_qp  = 22;
+    //int model_qp  = 22;
+    int model_idx = 0;
     int qp_diff   = abs(slice_qp - 22);
     if (abs(slice_qp - 27) < qp_diff){
-        model_qp = 27;
+        //model_qp = 27;
         qp_diff = abs(slice_qp - 27);
+        model_idx = 1;
     }
     if (abs(slice_qp - 32) < qp_diff){
-        model_qp = 32;
+        //model_qp = 32;
         qp_diff = abs(slice_qp - 32);
+        model_idx = 2;
     }
     if (abs(slice_qp - 37) < qp_diff){
-        model_qp = 37;
+        //model_qp = 37;
         qp_diff = abs(slice_qp - 37);
+        model_idx = 3;
     }
     if (abs(slice_qp - 42) < qp_diff){
-        model_qp = 42;
+        //model_qp = 42;
         qp_diff = abs(slice_qp - 42);
+        model_idx = 4;
     }
-    std::string model_path = "../model/" + model_name + "_q" + to_string(model_qp) + ".pt";
-    at::Device device = at::kCUDA;
-//        at::Device device = at::kCPU;
+//    std::string model_path = "../model/" + model_name + "_q" + to_string(model_qp) + ".pt";
+//    at::Device device = at::kCUDA;
+//    at::Device device = at::kCPU;
 
     if ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32))
     {
@@ -1833,7 +1838,7 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
 
       torch::Tensor input_tensor =
         torch::from_blob(normal_img_src.data, { normal_img_src.rows, normal_img_src.cols, 1 }, torch::kFloat)
-          .to(device);
+          .to(m_pTorchHelperUni[model_idx]->device);
 
       input_tensor = input_tensor.permute({ 2, 0, 1 });
       input_tensor = input_tensor.unsqueeze(0);
@@ -1842,23 +1847,23 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
 
       normal_img_src.release();
 
-      torch::jit::script::Module module;
-      try
-      {
-        module = torch::jit::load(model_path, device);
-        module.eval();
-      }
-      catch (const c10::Error &e)
-      {
-        std::cerr << "error loading the model\n";
-      }
+//      torch::jit::script::Module module;
+//      try
+//      {
+//        module = torch::jit::load(model_path, device);
+//        module.eval();
+//      }
+//      catch (const c10::Error &e)
+//      {
+//        std::cerr << "error loading the model\n";
+//      }
 
       try
       {
         at::Tensor output_net;
         try
         {
-          auto output_net_ = module.forward(input_tensors_final);
+          auto output_net_ = m_pTorchHelperUni[model_idx]->model.forward(input_tensors_final);
           output_net       = output_net_.toTensor();
         }
         catch (const c10::Error &e)
