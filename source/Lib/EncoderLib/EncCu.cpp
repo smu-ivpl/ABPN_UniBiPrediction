@@ -3235,15 +3235,21 @@ void EncCu::xCheckRDCostAffineMerge2Nx2N( CodingStructure *&tempCS, CodingStruct
 
         distParam.cur = acMergeBuffer[uiMergeCand].Y();
 
-        m_pcInterSearch->motionCompensation( pu, acMergeBuffer[uiMergeCand], REF_PIC_LIST_X, true, false );
-
-        Distortion uiSad = distParam.distFunc( distParam );
         uint32_t   uiBitsCand = uiMergeCand + 1;
         if ( uiMergeCand == tempCS->picHeader->getMaxNumAffineMergeCand() - 1 )
         {
           uiBitsCand--;
         }
+
+        m_pcInterSearch->m_currDistParam = distParam;
+        m_pcInterSearch->m_uiCurrMergeCand = uiMergeCand;
+        m_pcInterSearch->m_uiCurrBitsCand = uiBitsCand;
+
+        m_pcInterSearch->motionCompensation( pu, acMergeBuffer[uiMergeCand], REF_PIC_LIST_X, true, false );
+
+        Distortion uiSad = distParam.distFunc( distParam );
         double cost = (double)uiSad + (double)uiBitsCand * sqrtLambdaForFirstPass;
+
         updateCandList( uiMergeCand, cost, RdModeList, candCostList
           , uiNumMrgSATDCand );
 

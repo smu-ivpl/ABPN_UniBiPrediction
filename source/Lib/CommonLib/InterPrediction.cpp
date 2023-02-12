@@ -1635,7 +1635,7 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
   CHECK_(predBufWOBIO && pu.ciipFlag, "the case should not happen!");
 
   // [YJC] for uni-prediction block enhancement
-  bool BiPredApplied = false;
+  m_bBiPredApplied = false;
 
   if (!pu.cs->pcv->isEncoder)
   {
@@ -1754,98 +1754,141 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
       else
       {
         xPredInterBi(pu, predBuf, luma, chroma, predBufWOBIO);
-        BiPredApplied = true;
+        m_bBiPredApplied = true;
       }
     }
   }
-  // [YJC] uni-prediction block enhancement
-  if(!BiPredApplied)
+
+
+//  DistParam cDistParam;
+//  cDistParam.applyWeight = false;
+//  cDistParam.useMR = false;
+//  m_pcRdCost->setDistParam(cDistParam, pOrg, pRef, orgStride, refStride, bitDepth, COMPONENT_Y, width, height, 1);
+//  uint64_t uiCost = cDistParam.distFunc(cDistParam);
+
+  size_t cu_w    = predBuf.bufs[0].width;
+  size_t cu_h    = predBuf.bufs[0].height;
+  size_t cu_size = cu_w * cu_h;
+
+  if((!m_bBiPredApplied) && ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32)))
   {
-    int cu_w    = predBuf.bufs[0].width;
-    int cu_h    = predBuf.bufs[0].height;
-    int cu_size = cu_w * cu_h;
+    double cost_a = 0., cost_b = 0.;
+    double sqrtLambdaForFirstPass = m_pcRdCost->getMotionLambda( );
+    Pel *temp = nullptr;
 
-    //std::string model_name = "att_uni_prediction";
-    int slice_qp = pu.cs->slice->getSliceQp();
-    //int model_qp  = 22;
-    int model_idx = 0;
-    int qp_diff   = abs(slice_qp - 22);
-    if (abs(slice_qp - 27) < qp_diff){
-        //model_qp = 27;
-        qp_diff = abs(slice_qp - 27);
-        model_idx = 1;
-    }
-    if (abs(slice_qp - 32) < qp_diff){
-        //model_qp = 32;
-        qp_diff = abs(slice_qp - 32);
-        model_idx = 2;
-    }
-    if (abs(slice_qp - 37) < qp_diff){
-        //model_qp = 37;
-        qp_diff = abs(slice_qp - 37);
-        model_idx = 3;
-    }
-    if (abs(slice_qp - 42) < qp_diff){
-        //model_qp = 42;
-        qp_diff = abs(slice_qp - 42);
-        model_idx = 4;
-    }
-//    std::string model_path = "../model/" + model_name + "_q" + to_string(model_qp) + ".pt";
-//    at::Device device = at::kCUDA;
-//    at::Device device = at::kCPU;
+    if (this->m_bRDCompetition) {
+      Distortion uiSad_a = this->m_currDistParam.distFunc( this->m_currDistParam );
+      cost_a = (double)uiSad_a + (double)this->m_uiCurrBitsCand * sqrtLambdaForFirstPass;
 
-    if ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32))
+      temp = (Pel *) xMalloc(Pel, cu_size);
+      std::memcpy(temp, (Pel *) predBuf.bufs[0].buf, sizeof(Pel) * cu_size);
+    }
+
+    // [YJC] uni-prediction block enhancement
+    uniEnhancementWithCnn(pu, predBuf);
+
+    if (this->m_bRDCompetition) {
+      Distortion uiSad_b = this->m_currDistParam.distFunc( this->m_currDistParam );
+      cost_b = (double)uiSad_b + (double)this->m_uiCurrBitsCand * sqrtLambdaForFirstPass;
+
+      if (cost_a < cost_b)
+      {
+        predBuf.bufs[0].copyFrom(CPelBuf(temp, predBuf.bufs[0].stride, pu.lumaSize()));
+//        std::cout << "cost_a: " << cost_a << " cost_b: " << cost_b << std::endl;
+      }
+      xFree(temp);
+    }
+  }
+
+  return;
+}
+
+void InterPrediction::uniEnhancementWithCnn(const PredictionUnit &pu, PelUnitBuf &predBuf)
+{
+  int cu_w    = predBuf.bufs[0].width;
+  int cu_h    = predBuf.bufs[0].height;
+  int cu_size = cu_w * cu_h;
+
+  // std::string model_name = "att_uni_prediction";
+  int slice_qp = pu.cs->slice->getSliceQp();
+  // int model_qp  = 22;
+  int model_idx = 0;
+  int qp_diff   = abs(slice_qp - 22);
+  if (abs(slice_qp - 27) < qp_diff){
+      //model_qp = 27;
+      qp_diff = abs(slice_qp - 27);
+      model_idx = 1;
+  }
+  if (abs(slice_qp - 32) < qp_diff){
+      //model_qp = 32;
+      qp_diff = abs(slice_qp - 32);
+      model_idx = 2;
+  }
+  if (abs(slice_qp - 37) < qp_diff){
+      //model_qp = 37;
+      qp_diff = abs(slice_qp - 37);
+      model_idx = 3;
+  }
+  if (abs(slice_qp - 42) < qp_diff){
+      //model_qp = 42;
+      qp_diff = abs(slice_qp - 42);
+      model_idx = 4;
+  }
+  //    std::string model_path = "../model/" + model_name + "_q" + to_string(model_qp) + ".pt";
+    //    at::Device device = at::kCUDA;
+    //    at::Device device = at::kCPU;
+
+
+  const Pel    *src       = predBuf.bufs[0].buf;
+  int           cu_stride = predBuf.bufs[0].stride;
+  const ClpRng &cu_clpRng = pu.cu->slice->clpRng(COMPONENT_Y);
+  uchar *src_input;
+  src_input = (uchar *) xMalloc(uchar, cu_h * cu_w);
+
+  for (int h = cu_h; h != 0; h--)
+  {
+    for (int n = 0; n < cu_w; n++)
     {
-      const Pel    *src       = predBuf.bufs[0].buf;
-      int           cu_stride = predBuf.bufs[0].stride;
-      const ClpRng &cu_clpRng = pu.cu->slice->clpRng(COMPONENT_Y);
-      uchar *src_input;
-      src_input = (uchar *) xMalloc(uchar, cu_h * cu_w);
+      src_input[((cu_h - h) * cu_w) + n] = (uchar) (src[n] >> 2);
+    }
+    src += cu_stride;
+  }
+  cv::Mat img_src_8(cv::Size(cu_w, cu_h), CV_8UC1, src_input);
 
-      for (int h = cu_h; h != 0; h--)
+  cv::Mat normal_img_src;
+  img_src_8.convertTo(normal_img_src, CV_32FC1, 1.0 / 255, 0);
+
+  xFree(src_input);
+
+  img_src_8.release();
+
+  vector<c10::IValue> input_tensors_final;
+
+  for (int i = 0; i < normal_img_src.rows; i++)
+  {
+    for (int j = 0; j < normal_img_src.cols; j++)
+    {
+      if (normal_img_src.at<float>(i, j) < 0.0)
       {
-        for (int n = 0; n < cu_w; n++)
-        {
-          src_input[((cu_h - h) * cu_w) + n] = (uchar) (src[n] >> 2);
-        }
-        src += cu_stride;
+        normal_img_src.at<float>(i, j) = 0.0;
       }
-      cv::Mat img_src_8(cv::Size(cu_w, cu_h), CV_8UC1, src_input);
-
-      cv::Mat normal_img_src;
-      img_src_8.convertTo(normal_img_src, CV_32FC1, 1.0 / 255, 0);
-
-      xFree(src_input);
-
-      img_src_8.release();
-
-      std::vector<torch::jit::IValue> input_tensors_final;
-
-      for (int i = 0; i < normal_img_src.rows; i++)
+      else if (normal_img_src.at<float>(i, j) > 1.0)
       {
-        for (int j = 0; j < normal_img_src.cols; j++)
-        {
-          if (normal_img_src.at<float>(i, j) < 0.0)
-          {
-            normal_img_src.at<float>(i, j) = 0.0;
-          }
-          else if (normal_img_src.at<float>(i, j) > 1.0)
-          {
-            normal_img_src.at<float>(i, j) = 1.0;
-          }
-        }
+        normal_img_src.at<float>(i, j) = 1.0;
       }
+    }
+  }
 
-      torch::Tensor input_tensor =
-        torch::from_blob(normal_img_src.data, { normal_img_src.rows, normal_img_src.cols, 1 }, torch::kFloat)
-          .to(m_pTorchHelperUni[model_idx]->device);
+  torch::Tensor input_tensor =
+    torch::from_blob(normal_img_src.data, { normal_img_src.rows, normal_img_src.cols, 1 }, torch::kFloat)
+      .to(m_pTorchHelperUni[model_idx]->device);
 
-      input_tensor = input_tensor.permute({ 2, 0, 1 });
-      input_tensor = input_tensor.unsqueeze(0);
+  input_tensor = input_tensor.permute({ 2, 0, 1 });
+  input_tensor = input_tensor.unsqueeze(0);
 
-      input_tensors_final.push_back(input_tensor);   // {1, channels, height, width}
+  input_tensors_final.push_back(input_tensor);   // {1, channels, height, width}
 
-      normal_img_src.release();
+  normal_img_src.release();
 
 //      torch::jit::script::Module module;
 //      try
@@ -1858,57 +1901,53 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
 //        std::cerr << "error loading the model\n";
 //      }
 
-      try
+  try
+  {
+    at::Tensor output_net;
+    try
+    {
+      auto output_net_ = m_pTorchHelperUni[model_idx]->model.forward(input_tensors_final);
+      output_net       = output_net_.toTensor();
+    }
+    catch (const c10::Error &e)
+    {
+      cerr << "error\n";
+    }
+    auto output_tensor = output_net.cpu().detach();
+
+    float *preds;
+    preds = (float *) xMalloc(float, cu_h *cu_w);
+    memcpy(preds, (float *) output_tensor.data_ptr(), sizeof(float) * cu_size);
+
+    Pel *dstCNN;
+    dstCNN = (Pel *) xMalloc(Pel, cu_h * cu_w);
+
+    for (int h = cu_h; h != 0; h--)
+    {
+      for (int n = 0; n < cu_w; n++)
       {
-        at::Tensor output_net;
-        try
+        if (isnan(preds[((cu_h - h) * cu_w) + n]))
         {
-          auto output_net_ = m_pTorchHelperUni[model_idx]->model.forward(input_tensors_final);
-          output_net       = output_net_.toTensor();
+          Pel temp = 0;
+          dstCNN[((cu_h - h) * cu_w) + n] = temp;
         }
-        catch (const c10::Error &e)
+        else
         {
-          std::cerr << "error\n";
+          Pel temp = (Pel) ClipPel((Pel) (preds[((cu_h - h) * cu_w) + n] * 1023), cu_clpRng);
+          dstCNN[((cu_h - h) * cu_w) + n] = temp;
         }
-        auto output_tensor = output_net.cpu().detach();
-
-        float *preds;
-        preds = (float *) xMalloc(float, cu_h *cu_w);
-        std::memcpy(preds, (float *) output_tensor.data_ptr(), sizeof(float) * cu_size);
-
-        Pel *dstCNN;
-        dstCNN = (Pel *) xMalloc(Pel, cu_h * cu_w);
-
-        for (int h = cu_h; h != 0; h--)
-        {
-          for (int n = 0; n < cu_w; n++)
-          {
-            if (isnan(preds[((cu_h - h) * cu_w) + n]))
-            {
-              Pel temp = 0;
-              dstCNN[((cu_h - h) * cu_w) + n] = temp;
-            }
-            else
-            {
-              Pel temp = (Pel) ClipPel((Pel) (preds[((cu_h - h) * cu_w) + n] * 1023), cu_clpRng);
-              dstCNN[((cu_h - h) * cu_w) + n] = temp;
-            }
-          }
-        }
-
-        predBuf.bufs[0].copyFrom(CPelBuf(dstCNN, cu_stride, pu.lumaSize()));
-
-        xFree(preds);
-        xFree(dstCNN);
-      }
-      catch (...)
-      {
-        std::cerr << "error in forward\n";
       }
     }
-  }
 
-  return;
+    predBuf.bufs[0].copyFrom(CPelBuf(dstCNN, cu_stride, pu.lumaSize()));
+
+    xFree(preds);
+    xFree(dstCNN);
+  }
+  catch (...)
+  {
+    cerr << "error in forward\n";
+  }
 }
 
 void InterPrediction::motionCompensation( CodingUnit &cu, const RefPicList &eRefPicList

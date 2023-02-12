@@ -69,6 +69,15 @@ public:
   // yw.lee ==================================
   PyTorchHelper *m_pTorchHelperUni[5] = { nullptr, };
   PyTorchHelper *m_pTorchHelperBi = nullptr;
+
+  bool m_bBiPredApplied = false;
+  bool m_bRDCompetition = true;
+
+  DistParam m_currDistParam;
+  uint32_t m_uiCurrMergeCand;
+  uint32_t m_uiCurrBitsCand;
+
+  void uniEnhancementWithCnn(const PredictionUnit &pu, PelUnitBuf &predBuf);
   ////////////////////////////////////////////
 
 private:
