@@ -72,6 +72,7 @@ public:
 
   bool m_bBiPredApplied = false;
   bool m_bRDCompetition = true;
+  bool m_bUniCnnApplied = true;
 
   DistParam m_currDistParam;
   uint32_t m_uiCurrMergeCand;

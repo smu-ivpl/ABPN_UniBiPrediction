@@ -411,6 +411,8 @@ struct InterPredictionData
 
 struct PredictionUnit : public UnitArea, public IntraPredictionData, public InterPredictionData
 {
+  bool            cnn_flag = false; // yw.lee
+
   CodingUnit      *cu;
   CodingStructure *cs;
   ChannelType      chType;

@@ -1223,6 +1223,10 @@ void CABACReader::cu_pred_data( CodingUnit &cu )
   for( auto &pu : CU::traversePUs( cu ) )
   {
     prediction_unit( pu, mrgCtx );
+    // yw.lee ==========================================================================================================
+    pu.cnn_flag = m_BinDecoder.decodeBinEP( );
+//    std::cout << "cnn_flag: " << pu.cnn_flag << std::endl;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   }
 
   imv_mode   ( cu, mrgCtx );

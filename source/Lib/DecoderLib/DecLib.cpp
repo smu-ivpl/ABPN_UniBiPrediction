@@ -513,6 +513,7 @@ void DecLib::init(
 )
 {
   m_cSliceDecoder.init( &m_CABACDecoder, &m_cCuDecoder );
+
 #if JVET_J0090_MEMORY_BANDWITH_MEASURE
   m_cacheModel.create( cacheCfgFileName );
   m_cacheModel.clear( );
@@ -1568,6 +1569,25 @@ void DecLib::xActivateParameterSets( const InputNALUnit nalu )
     m_cLoopFilter.create(maxDepth);
     m_cIntraPred.init( sps->getChromaFormatIdc(), sps->getBitDepth( CHANNEL_TYPE_LUMA ) );
     m_cInterPred.init( &m_cRdCost, sps->getChromaFormatIdc(), sps->getMaxCUHeight() );
+
+    // yw.lee ============================================================================================================
+    bool useGpu = true;
+    int nGpu = 2;
+    this->m_pTorchHelperBi = new PyTorchHelper("../model/bi_prediction_abpn_one_t.pt", useGpu, nGpu);
+    this->m_pTorchHelperUni[0] = new PyTorchHelper("../model/att_uni_prediction_q22.pt", useGpu, nGpu);
+    this->m_pTorchHelperUni[1] = new PyTorchHelper("../model/att_uni_prediction_q27.pt", useGpu, nGpu);
+    this->m_pTorchHelperUni[2] = new PyTorchHelper("../model/att_uni_prediction_q32.pt", useGpu, nGpu);
+    this->m_pTorchHelperUni[3] = new PyTorchHelper("../model/att_uni_prediction_q37.pt", useGpu, nGpu);
+    this->m_pTorchHelperUni[4] = new PyTorchHelper("../model/att_uni_prediction_q42.pt", useGpu, nGpu);
+
+    m_cInterPred.m_pTorchHelperBi = this->m_pTorchHelperBi;
+    m_cInterPred.m_pTorchHelperUni[0] = this->m_pTorchHelperUni[0];
+    m_cInterPred.m_pTorchHelperUni[1] = this->m_pTorchHelperUni[1];
+    m_cInterPred.m_pTorchHelperUni[2] = this->m_pTorchHelperUni[2];
+    m_cInterPred.m_pTorchHelperUni[3] = this->m_pTorchHelperUni[3];
+    m_cInterPred.m_pTorchHelperUni[4] = this->m_pTorchHelperUni[4];
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     if (sps->getUseLmcs())
     {
       m_cReshaper.createDec(sps->getBitDepth(CHANNEL_TYPE_LUMA));

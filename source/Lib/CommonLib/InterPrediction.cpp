@@ -1759,47 +1759,47 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
     }
   }
 
-
-//  DistParam cDistParam;
-//  cDistParam.applyWeight = false;
-//  cDistParam.useMR = false;
-//  m_pcRdCost->setDistParam(cDistParam, pOrg, pRef, orgStride, refStride, bitDepth, COMPONENT_Y, width, height, 1);
-//  uint64_t uiCost = cDistParam.distFunc(cDistParam);
-
-  size_t cu_w    = predBuf.bufs[0].width;
-  size_t cu_h    = predBuf.bufs[0].height;
-  size_t cu_size = cu_w * cu_h;
-
-  if((!m_bBiPredApplied) && ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32)))
+  if (m_bUniCnnApplied || (!(pu.cs->pcv->isEncoder) && pu.cnn_flag))
   {
-    double cost_a = 0., cost_b = 0.;
-    double sqrtLambdaForFirstPass = m_pcRdCost->getMotionLambda( );
-    Pel *temp = nullptr;
+    size_t cu_w    = predBuf.bufs[0].width;
+    size_t cu_h    = predBuf.bufs[0].height;
+    size_t cu_size = cu_w * cu_h;
 
-    if (this->m_bRDCompetition) {
-      Distortion uiSad_a = this->m_currDistParam.distFunc( this->m_currDistParam );
-      cost_a = (double)uiSad_a + (double)this->m_uiCurrBitsCand * sqrtLambdaForFirstPass;
+    if((!m_bBiPredApplied) && ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32)))
+    {
+      double cost_a = 0., cost_b = 0.;
+      double sqrtLambdaForFirstPass = m_pcRdCost->getMotionLambda( );
+      Pel *temp = nullptr;
 
-      temp = (Pel *) xMalloc(Pel, cu_size);
-      std::memcpy(temp, (Pel *) predBuf.bufs[0].buf, sizeof(Pel) * cu_size);
-    }
+      if (this->m_bRDCompetition && pu.cs->pcv->isEncoder) {
+        Distortion uiSad_a = this->m_currDistParam.distFunc( this->m_currDistParam );
+        cost_a = (double)uiSad_a + (double)this->m_uiCurrBitsCand * sqrtLambdaForFirstPass;
 
-    // [YJC] uni-prediction block enhancement
-    uniEnhancementWithCnn(pu, predBuf);
-
-    if (this->m_bRDCompetition) {
-      Distortion uiSad_b = this->m_currDistParam.distFunc( this->m_currDistParam );
-      cost_b = (double)uiSad_b + (double)this->m_uiCurrBitsCand * sqrtLambdaForFirstPass;
-
-      if (cost_a < cost_b)
-      {
-        predBuf.bufs[0].copyFrom(CPelBuf(temp, predBuf.bufs[0].stride, pu.lumaSize()));
-//        std::cout << "cost_a: " << cost_a << " cost_b: " << cost_b << std::endl;
+        temp = (Pel *) xMalloc(Pel, cu_size);
+        std::memcpy(temp, (Pel *) predBuf.bufs[0].buf, sizeof(Pel) * cu_size);
       }
-      xFree(temp);
+
+      // [YJC] uni-prediction block enhancement
+      uniEnhancementWithCnn(pu, predBuf);
+
+      if (this->m_bRDCompetition && pu.cs->pcv->isEncoder) {
+        Distortion uiSad_b = this->m_currDistParam.distFunc( this->m_currDistParam );
+        cost_b = (double)uiSad_b + (double)this->m_uiCurrBitsCand * sqrtLambdaForFirstPass;
+
+        if (cost_a < cost_b) // cnn 비용이 더 높으면 원상태로 복구
+        {
+          predBuf.bufs[0].copyFrom(CPelBuf(temp, predBuf.bufs[0].stride, pu.lumaSize()));
+          //        std::cout << "cost_a: " << cost_a << " cost_b: " << cost_b << std::endl;
+          pu.cnn_flag = false;
+        }
+        else
+        {
+          pu.cnn_flag = true;
+        }
+        xFree(temp);
+      }
     }
   }
-
   return;
 }
 

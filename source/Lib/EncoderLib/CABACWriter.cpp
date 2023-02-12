@@ -865,6 +865,15 @@ void CABACWriter::cu_pred_data( const CodingUnit& cu )
   for( auto &pu : CU::traversePUs( cu ) )
   {
     prediction_unit( pu );
+    // yw.lee ==========================================================================================================
+    if (pu.cnn_flag) {
+      m_BinEncoder.encodeBinEP(1);
+    }
+    else {
+      m_BinEncoder.encodeBinEP(0);
+    }
+//    std::cout << "cnn_flag: " << pu.cnn_flag << std::endl;
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   }
 
   imv_mode   ( cu );

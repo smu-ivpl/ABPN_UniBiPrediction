@@ -458,7 +458,7 @@ void EncLib::init( bool isFieldCoding, AUWriterIf* auWriterIf )
 
   // yw.lee ============================================================================================================
   bool useGpu = true;
-  int nGpu = 1;
+  int nGpu = 2;
   this->m_pTorchHelperBi = new PyTorchHelper("../model/bi_prediction_abpn_one_t.pt", useGpu, nGpu);
   this->m_pTorchHelperUni[0] = new PyTorchHelper("../model/att_uni_prediction_q22.pt", useGpu, nGpu);
   this->m_pTorchHelperUni[1] = new PyTorchHelper("../model/att_uni_prediction_q27.pt", useGpu, nGpu);
