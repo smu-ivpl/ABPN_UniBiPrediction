@@ -55,16 +55,18 @@ include( ${CMAKE_SOURCE_DIR}/cmake/CMakeBuild/cmake/modules/BBuildEnv.cmake )
 # Enable multithreading
 bb_multithreading()
 
-# libtorch
-list(APPEND CMAKE_PREFIX_PATH "~/Libraries/libtorch")
-set(PYTHON_EXECUTABLE "/usr/bin/python3")
+# yw.lee: pytorch
+#list(APPEND CMAKE_PREFIX_PATH "/Library/libtorch180_cu111/")
+set(CMAKE_CUDA_COMPILER /usr/local/cuda/bin/nvcc) # CUDA 11.3
+# list(APPEND CMAKE_PREFIX_PATH "/home/ywlee/lib/libtorch-cxx11-abi-shared-with-deps-1.11.0+cu113/") # ivpl
+list(APPEND CMAKE_PREFIX_PATH "/home/ywlee/lib/libtorch-cxx11-abi-shared-with-deps-1.13.0+cu117/")  # i9
 find_package(Torch REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TORCH_CXX_FLAGS}")
+include_directories(${TORCH_INCLUDE_DIRS})
 
-# opencv
-set(OpenCV_DIR [OpenCV.cmake PATH])
+# yw.lee: opencv
 find_package(OpenCV REQUIRED)
-include_directories(${OpenCV_INCLUDE_DIR})
+include_directories(${OpenCV_INCLUDE_DIRS})
 
 find_package(OpenMP)
 
