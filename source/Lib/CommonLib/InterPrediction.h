@@ -49,6 +49,9 @@
 
 #include "RdCost.h"
 #include "ContextModelling.h"
+
+#include "PyTorchHelper.h"
+
 // forward declaration
 class Mv;
 
@@ -62,6 +65,12 @@ class Mv;
 
 class InterPrediction : public WeightPrediction
 {
+public:
+  // yw.lee >>> 파이토치 모델 포인터
+  PyTorchHelper *m_pTorchHelperUni = nullptr;
+  PyTorchHelper *m_pTorchHelperBi = nullptr;
+  // <<< yw.lee
+
 private:
 
 

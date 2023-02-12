@@ -1373,13 +1373,6 @@ void InterPrediction::xWeightedAverage(const PredictionUnit& pu, const CPelUnitB
   int           cu_h      = pcYuvSrc0.bufs[0].height;
   int           cu_size   = cu_w * cu_h;
   int           slice_qp_value = pu.cs->slice->getSliceQp();
-
-  std::string model_name = "bi_prediction_abpn_one_t";
-  std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/model/"
-                             + model_name + ".pt";
-
-  at::Device device = at::kCUDA;
-//  at::Device device = at::kCPU;
    
   if( iRefIdx0 >= 0 && iRefIdx1 >= 0 )
   {
@@ -1455,10 +1448,10 @@ void InterPrediction::xWeightedAverage(const PredictionUnit& pu, const CPelUnitB
 
       torch::Tensor input_tensor_0 =
         torch::from_blob(normal_img_src0.data, { 1, normal_img_src0.rows, normal_img_src0.cols, 1 }, torch::kFloat)
-          .to(device);
+          .to(m_pTorchHelperBi->device);
       torch::Tensor input_tensor_1 =
         torch::from_blob(normal_img_src1.data, { 1, normal_img_src1.rows, normal_img_src1.cols, 1 }, torch::kFloat)
-          .to(device);
+          .to(m_pTorchHelperBi->device);
       torch::Tensor qp_tensor = torch::zeros_like(input_tensor_0);
       qp_tensor.fill_((float) (slice_qp_value / 51.)); // [1, height, width, channel(1)]
       torch::Tensor input_tensor = torch::cat({ input_tensor_0, input_tensor_1, qp_tensor });
@@ -1470,23 +1463,12 @@ void InterPrediction::xWeightedAverage(const PredictionUnit& pu, const CPelUnitB
       normal_img_src0.release();
       normal_img_src1.release();
 
-      torch::jit::script::Module module;
-      try
-      {
-        module = torch::jit::load(model_path, device);
-        module.eval();
-      }
-      catch (const c10::Error &e)
-      {
-        std::cerr << "error loading the model\n";
-      }
-
       try
       {
         at::Tensor output_net;
         try
         {
-          auto output_net_ = module.forward(input_tensors_final);
+          auto output_net_ = m_pTorchHelperBi->model.forward(input_tensors_final);
           output_net       = output_net_.toTensor();
         }
         catch (const c10::Error &e)
@@ -1757,47 +1739,29 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
   }
   
   //  [YJC] uni-prediction block enhancement
-  //  int cu_poc = pu.cs->slice->getPOC();
-  //  int cu_x = pu.cu->Y().x;
-  //  int cu_y = pu.cu->Y().y;
+
   int cu_w = pu.cu->Y().width;
   int cu_h = pu.cu->Y().height;
-  //  bool skip_mode = pu.cu->skip;
-  //  bool merge_mode = pu.mergeFlag;
-  //  int slice_qp   = pu.cs->slice->getSliceQp();
-  //  int ref_slice_qp_l0 = 0;
-  //  int ref_slice_qp_l1 = 0;
+
   int inter_dir = 0; // 1 : uni l0, 2 : uni l1, 3 : bi
   if (pu.refIdx[REF_PIC_LIST_1] < 0 && pu.refIdx[REF_PIC_LIST_0] >= 0){
-    //  ref_slice_qp_l0 = pu.cs->slice->getRefPic(REF_PIC_LIST_0, pu.refIdx[REF_PIC_LIST_0])->cs->slice->getSliceQp();
+
     inter_dir = 1;
   }
   else if (pu.refIdx[REF_PIC_LIST_0] < 0 && pu.refIdx[REF_PIC_LIST_1] >= 0){
-    //  ref_slice_qp_l1 = pu.cs->slice->getRefPic(REF_PIC_LIST_1, pu.refIdx[REF_PIC_LIST_1])->cs->slice->getSliceQp();
+
     inter_dir = 2;
   }
   else if (pu.refIdx[REF_PIC_LIST_0] >= 0 && pu.refIdx[REF_PIC_LIST_1] >= 0){
-    //  ref_slice_qp_l0 = pu.cs->slice->getRefPic(REF_PIC_LIST_0, pu.refIdx[REF_PIC_LIST_0])->cs->slice->getSliceQp();
-    //  ref_slice_qp_l1 = pu.cs->slice->getRefPic(REF_PIC_LIST_1, pu.refIdx[REF_PIC_LIST_1])->cs->slice->getSliceQp();
+
     inter_dir = 3;
   }
-  //  bool subblock_mode = false;
-  //  if (pu.cu->imv == 0 || pu.cu->imv == IMV_HPEL){
-  //    subblock_mode = true;
-  //  }
-  //  bool affine_mode = pu.cu->affine;
-  //  int tid = pu.cs->slice->getTLayer();
-  if((inter_dir == 1 || inter_dir == 2) && ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32)))
+
+  if ((inter_dir == 1 || inter_dir == 2) &&
+      ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32)))
   {
     int cu_size = cu_w * cu_h;
-    std::string model_name = "uni_prediction_aupn_one_predonly"; // AUPN_BVIDVC_D_PredOnly_Copy_net_g_190000
-    std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/model/"
-                             + model_name + ".pt";
-    at::Device device = at::kCUDA;
-    //  at::Device device = at::kCPU;
-    
-    // Prediction Block
-    // -----------------------------------------------------------------------------------------------------------------
+
     const Pel *   predSrcY = predBuf.bufs[0].buf;
     int predSrcY_stride = predBuf.Y().stride;
     const ClpRng &predSrcY_clpRng = pu.cu->slice->clpRng(COMPONENT_Y);
@@ -1826,99 +1790,20 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
 
     torch::Tensor input_tensor_pred =
       torch::from_blob(normal_img_predSrcY.data, { normal_img_predSrcY.rows, normal_img_predSrcY.cols, 1 }, torch::kFloat)
-        .to(device);
+        .to(m_pTorchHelperBi->device);
     input_tensor_pred               = input_tensor_pred.unsqueeze(0); // [1, height, width, channel(1)]
-    // -----------------------------------------------------------------------------------------------------------------
-    
-    // Additional Info (Optional)
-    // -----------------------------------------------------------------------------------------------------------------
-    //    torch::Tensor input_tensor_skip = torch::zeros_like(input_tensor_pred);
-    //    float skip_mode_value = 1.0;
-    //    if(!skip_mode){
-    //      skip_mode_value = 0.01;
-    //    }
-    //    input_tensor_skip.fill_(skip_mode_value); // [1, height, width, channel(1)]
-    //
-    //    torch::Tensor input_tensor_merge = torch::zeros_like(input_tensor_pred);
-    //    float merge_mode_value = 1.0;
-    //    if(!merge_mode){
-    //      merge_mode_value = 0.01;
-    //    }
-    //    input_tensor_merge.fill_(merge_mode_value); // [1, height, width, channel(1)]
-    //
-    //    torch::Tensor input_tensor_slice_qp = torch::zeros_like(input_tensor_pred);
-    //    input_tensor_slice_qp.fill_((float) (slice_qp / 63.)); // [1, height, width, channel(1)]
-    //
-    //    int ref_slice_qp = 32;
-    //    if(ref_slice_qp_l0 > 0){
-    //      ref_slice_qp = ref_slice_qp_l0;
-    //    }
-    //    else if(ref_slice_qp_l1 > 0){
-    //      ref_slice_qp = ref_slice_qp_l1;
-    //    }
-    //    torch::Tensor input_tensor_ref_slice_qp = torch::zeros_like(input_tensor_pred);
-    //    input_tensor_ref_slice_qp.fill_((float) (ref_slice_qp / 63.)); // [1, height, width, channel(1)]
-    //
-    //    torch::Tensor input_tensor_subblock = torch::zeros_like(input_tensor_pred);
-    //    float subblock_mode_value = 1.0;
-    //    if(!subblock_mode){
-    //      subblock_mode_value = 0.01;
-    //    }
-    //    input_tensor_subblock.fill_(subblock_mode_value); // [1, height, width, channel(1)]
-    //
-    //    torch::Tensor input_tensor_affine = torch::zeros_like(input_tensor_pred);
-    //    float affine_mode_value = 1.0;
-    //    if(!affine_mode){
-    //      affine_mode_value = 0.01;
-    //    }
-    //    input_tensor_affine.fill_(affine_mode_value); // [1, height, width, channel(1)]
-    //
-    //    torch::Tensor input_tensor_tid = torch::zeros_like(input_tensor_pred);
-    //    input_tensor_tid.fill_((float) (tid / 5.)); // [1, height, width, channel(1)]
-    
-    //    torch::Tensor input_tensor = torch::cat({ input_tensor_pred,
-    //                                              input_tensor_skip,
-    //                                              input_tensor_merge,
-    //                                              input_tensor_slice_qp,
-    //                                              input_tensor_ref_slice_qp,
-    //                                              input_tensor_subblock,
-    //                                              input_tensor_affine,
-    //                                              input_tensor_tid });
-    //    input_tensor               = input_tensor.permute({ 0, 3, 1, 2 }); // [info_channel(8), channel(1), height, width]
-    //    input_tensor               = input_tensor.unsqueeze(0); // [1, info_channel(8), channel(1), height, width]
-    // -----------------------------------------------------------------------------------------------------------------
-    
-    // Final Input
-    // -----------------------------------------------------------------------------------------------------------------
     input_tensor_pred               = input_tensor_pred.permute({ 0, 3, 1, 2 }); // [info_channel(1), channel(1), height, width]
     input_tensor_pred               = input_tensor_pred.unsqueeze(0); // [1, info_channel(1), channel(1), height, width]
-
     input_tensors_final.push_back(input_tensor_pred);   // [1, info_channel(8), channel(1), height, width]
-
     normal_img_predSrcY.release();
-    // -----------------------------------------------------------------------------------------------------------------
-    
-    // Loading CNN Model and Enhancing Prediction Block
-    // -----------------------------------------------------------------------------------------------------------------
-    torch::jit::script::Module module;
-    try
-    {
-      module = torch::jit::load(model_path, device);
-      module.eval();
-    }
-    catch (const c10::Error &e)
-    {
-      std::cerr << "error loading the model\n";
-    }
 
     try
     {
       at::Tensor output_net;
       try
       {
-        auto output_net_ = module.forward(input_tensors_final);
+        auto output_net_ = m_pTorchHelperUni->model.forward(input_tensors_final);
         output_net       = output_net_.toTensor();
-
       }
       catch (const c10::Error &e)
       {
@@ -1927,7 +1812,7 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
       auto output_tensor = output_net.cpu().detach();
 
       float *preds;
-      preds = (float *) xMalloc(float, cu_h * cu_w);
+      preds = (float *) xMalloc(float, cu_h *cu_w);
       std::memcpy(preds, (float *) output_tensor.data_ptr(), sizeof(float) * cu_size);
 
       Pel *dstCNN;

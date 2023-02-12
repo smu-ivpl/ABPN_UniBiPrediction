@@ -456,6 +456,16 @@ void EncLib::init( bool isFieldCoding, AUWriterIf* auWriterIf )
                      , &m_cReshaper
   );
 
+  // yw.lee >>> 파이토치 모델을 미리 로드해둔다.
+  bool useGpu = true; // CPU 또는 GPU 사용
+  int nGpu = 1;       // GPU 번호 선택 0, 1, 2, 3 ...
+  this->m_pTorchHelperBi = new PyTorchHelper("../model/bi_prediction_abpn_one_t.pt", useGpu, nGpu);
+  this->m_pTorchHelperUni = new PyTorchHelper("../model/uni_prediction_aupn_one_predonly.pt", useGpu, nGpu);
+  // inter-search 객체에 전달
+  m_cInterSearch.m_pTorchHelperBi = this->m_pTorchHelperBi;
+  m_cInterSearch.m_pTorchHelperUni = this->m_pTorchHelperUni;
+  // <<< yw.lee
+
   // link temporary buffets from intra search with inter search to avoid unneccessary memory overhead
   m_cInterSearch.setTempBuffers( m_cIntraSearch.getSplitCSBuf(), m_cIntraSearch.getFullCSBuf(), m_cIntraSearch.getSaveCSBuf() );
 #endif // ENABLE_SPLIT_PARALLELISM || ENABLE_WPP_PARALLELISM
