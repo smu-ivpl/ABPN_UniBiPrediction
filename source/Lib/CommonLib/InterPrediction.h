@@ -74,9 +74,9 @@ public:
   bool m_bRDCompetition = true;
   bool m_bUniCnnApplied = true;
 
-  DistParam m_currDistParam;
-  uint32_t m_uiCurrMergeCand;
-  uint32_t m_uiCurrBitsCand;
+//  DistParam m_currDistParam;
+//  double m_uiCurrSqrtLambda;
+//  uint32_t  m_uiCurrBits;
 
   void uniEnhancementWithCnn(const PredictionUnit &pu, PelUnitBuf &predBuf);
   ////////////////////////////////////////////

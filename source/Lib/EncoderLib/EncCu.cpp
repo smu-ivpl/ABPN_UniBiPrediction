@@ -2415,6 +2415,7 @@ void EncCu::xCheckRDCostMerge2Nx2N( CodingStructure *&tempCS, CodingStructure *&
         pu.mvRefine = true;
         distParam.cur = singleMergeTempBuffer->Y();
         acMergeTmpBuffer[uiMergeCand] = m_acMergeTmpBuffer[uiMergeCand].getBuf(localUnitArea);
+
         m_pcInterSearch->motionCompensation(pu, *singleMergeTempBuffer, REF_PIC_LIST_X, true, true, &(acMergeTmpBuffer[uiMergeCand]));
         acMergeBuffer[uiMergeCand] = m_acRealMergeBuffer[uiMergeCand].getBuf(localUnitArea);
         acMergeBuffer[uiMergeCand].copyFrom(*singleMergeTempBuffer);
@@ -2547,6 +2548,7 @@ void EncCu::xCheckRDCostMerge2Nx2N( CodingStructure *&tempCS, CodingStructure *&
           distParam.cur = singleMergeTempBuffer->Y();
           pu.mmvdEncOptMode = (refineStep > 2 ? 2 : 1);
           CHECK_(!pu.mmvdMergeFlag, "MMVD merge should be set");
+
           // Don't do chroma MC here
           m_pcInterSearch->motionCompensation(pu, *singleMergeTempBuffer, REF_PIC_LIST_X, true, false);
           pu.mmvdEncOptMode = 0;
@@ -2903,6 +2905,7 @@ void EncCu::xCheckRDCostMergeGeo2Nx2N(CodingStructure *&tempCS, CodingStructure 
       tempCS->initStructData(encTestMode.qp);
       return;
     }
+
     m_pcInterSearch->motionCompensation(pu, geoBuffer[mergeCand]);
     geoTempBuf[mergeCand] = m_acMergeTmpBuffer[mergeCand].getBuf(localUnitArea);
     geoTempBuf[mergeCand].Y().copyFrom(geoBuffer[mergeCand].Y());
@@ -3235,19 +3238,14 @@ void EncCu::xCheckRDCostAffineMerge2Nx2N( CodingStructure *&tempCS, CodingStruct
 
         distParam.cur = acMergeBuffer[uiMergeCand].Y();
 
+        m_pcInterSearch->motionCompensation( pu, acMergeBuffer[uiMergeCand], REF_PIC_LIST_X, true, false );
+
+        Distortion uiSad = distParam.distFunc( distParam );
         uint32_t   uiBitsCand = uiMergeCand + 1;
         if ( uiMergeCand == tempCS->picHeader->getMaxNumAffineMergeCand() - 1 )
         {
           uiBitsCand--;
         }
-
-        m_pcInterSearch->m_currDistParam = distParam;
-        m_pcInterSearch->m_uiCurrMergeCand = uiMergeCand;
-        m_pcInterSearch->m_uiCurrBitsCand = uiBitsCand;
-
-        m_pcInterSearch->motionCompensation( pu, acMergeBuffer[uiMergeCand], REF_PIC_LIST_X, true, false );
-
-        Distortion uiSad = distParam.distFunc( distParam );
         double cost = (double)uiSad + (double)uiBitsCand * sqrtLambdaForFirstPass;
 
         updateCandList( uiMergeCand, cost, RdModeList, candCostList
@@ -3332,6 +3330,7 @@ void EncCu::xCheckRDCostAffineMerge2Nx2N( CodingStructure *&tempCS, CodingStruct
         tempCS->initStructData( encTestMode.qp );
         return;
       }
+
       if ( mrgTempBufSet )
       {
         tempCS->getPredBuf().copyFrom(acMergeBuffer[uiMergeCand], true, false);   // Copy Luma Only

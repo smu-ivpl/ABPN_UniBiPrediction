@@ -383,6 +383,8 @@ struct IntraPredictionData
 
 struct InterPredictionData
 {
+  bool      cnnFlag; // yw.lee
+
   bool      mergeFlag;
   bool      regularMergeFlag;
   uint8_t     mergeIdx;
@@ -411,8 +413,6 @@ struct InterPredictionData
 
 struct PredictionUnit : public UnitArea, public IntraPredictionData, public InterPredictionData
 {
-  bool            cnn_flag = false; // yw.lee
-
   CodingUnit      *cu;
   CodingStructure *cs;
   ChannelType      chType;

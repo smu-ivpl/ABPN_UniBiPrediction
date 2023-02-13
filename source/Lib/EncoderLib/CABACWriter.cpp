@@ -866,13 +866,10 @@ void CABACWriter::cu_pred_data( const CodingUnit& cu )
   {
     prediction_unit( pu );
     // yw.lee ==========================================================================================================
-    if (pu.cnn_flag) {
-      m_BinEncoder.encodeBinEP(1);
-    }
-    else {
-      m_BinEncoder.encodeBinEP(0);
-    }
-//    std::cout << "cnn_flag: " << pu.cnn_flag << std::endl;
+    m_BinEncoder.encodeBin( pu.cnnFlag, Ctx::CnnFlag( ));
+//    m_BinEncoder.encodeBin( true, Ctx::CnnFlag( ));
+//    m_BinEncoder.encodeBin( 0 , Ctx::MergeFlag( ));
+//    std::cout << "cnnFlag: " << pu.cnnFlag << std::endl;
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   }
 

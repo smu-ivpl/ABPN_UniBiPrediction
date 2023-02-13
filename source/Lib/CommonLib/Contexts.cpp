@@ -233,6 +233,16 @@ const CtxSet ContextSetCfg::SkipFlag = ContextSetCfg::addCtxSet
   {   5,   4,   8, },
 });
 
+// yw.lee ==========================================================
+const CtxSet ContextSetCfg::CnnFlag = ContextSetCfg::addCtxSet
+({
+  {   6, },
+  {  21, },
+  {  26, },
+  {   4, },
+});
+////////////////////////////////////////////////////////////////////
+
 const CtxSet ContextSetCfg::MergeFlag = ContextSetCfg::addCtxSet
 ({
   {   6, },

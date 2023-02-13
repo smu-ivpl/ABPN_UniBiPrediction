@@ -1758,22 +1758,27 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
       }
     }
   }
-
-  if (m_bUniCnnApplied || (!(pu.cs->pcv->isEncoder) && pu.cnn_flag))
+  // yw.lee ============================================================================================================
+  if ((m_bUniCnnApplied || (!(pu.cs->pcv->isEncoder) && pu.cnnFlag)) && luma)
   {
     size_t cu_w    = predBuf.bufs[0].width;
     size_t cu_h    = predBuf.bufs[0].height;
     size_t cu_size = cu_w * cu_h;
 
+    RdCost* tempRDCost = new RdCost();
+    DistParam cDistParam;
+    const bool bUseHadamard = !pu.cs->slice->getDisableSATDForRD();
+    tempRDCost->setDistParam(cDistParam, pu.cs->getOrgBuf().Y(), predBuf.Y().buf, predBuf.Y().stride,
+                             pu.cs->sps->getBitDepth(CHANNEL_TYPE_LUMA), COMPONENT_Y, 0, 1, bUseHadamard);
+
     if((!m_bBiPredApplied) && ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32)))
     {
-      double cost_a = 0., cost_b = 0.;
-      double sqrtLambdaForFirstPass = m_pcRdCost->getMotionLambda( );
+      Distortion uiSad_a = 0, uiSad_b = 0;
       Pel *temp = nullptr;
 
       if (this->m_bRDCompetition && pu.cs->pcv->isEncoder) {
-        Distortion uiSad_a = this->m_currDistParam.distFunc( this->m_currDistParam );
-        cost_a = (double)uiSad_a + (double)this->m_uiCurrBitsCand * sqrtLambdaForFirstPass;
+        uiSad_a = cDistParam.distFunc( cDistParam );
+//        cost_a = (double)uiSad_a + (double)this->m_uiCurrBits * m_uiCurrSqrtLambda;
 
         temp = (Pel *) xMalloc(Pel, cu_size);
         std::memcpy(temp, (Pel *) predBuf.bufs[0].buf, sizeof(Pel) * cu_size);
@@ -1783,23 +1788,24 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
       uniEnhancementWithCnn(pu, predBuf);
 
       if (this->m_bRDCompetition && pu.cs->pcv->isEncoder) {
-        Distortion uiSad_b = this->m_currDistParam.distFunc( this->m_currDistParam );
-        cost_b = (double)uiSad_b + (double)this->m_uiCurrBitsCand * sqrtLambdaForFirstPass;
+        uiSad_b = cDistParam.distFunc( cDistParam );
+//        cost_b = (double)uiSad_b + (double)this->m_uiCurrBits * m_uiCurrSqrtLambda;
 
-        if (cost_a < cost_b) // cnn 비용이 더 높으면 원상태로 복구
+        if (uiSad_a <= uiSad_b) // cnn 비용이 더 높으면 원상태로 복구
         {
           predBuf.bufs[0].copyFrom(CPelBuf(temp, predBuf.bufs[0].stride, pu.lumaSize()));
           //        std::cout << "cost_a: " << cost_a << " cost_b: " << cost_b << std::endl;
-          pu.cnn_flag = false;
+          pu.cnnFlag = false;
         }
         else
         {
-          pu.cnn_flag = true;
+          pu.cnnFlag = true;
         }
         xFree(temp);
       }
     }
   }
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   return;
 }
 
@@ -1858,10 +1864,6 @@ void InterPrediction::uniEnhancementWithCnn(const PredictionUnit &pu, PelUnitBuf
   cv::Mat normal_img_src;
   img_src_8.convertTo(normal_img_src, CV_32FC1, 1.0 / 255, 0);
 
-  xFree(src_input);
-
-  img_src_8.release();
-
   vector<c10::IValue> input_tensors_final;
 
   for (int i = 0; i < normal_img_src.rows; i++)
@@ -1887,8 +1889,6 @@ void InterPrediction::uniEnhancementWithCnn(const PredictionUnit &pu, PelUnitBuf
   input_tensor = input_tensor.unsqueeze(0);
 
   input_tensors_final.push_back(input_tensor);   // {1, channels, height, width}
-
-  normal_img_src.release();
 
 //      torch::jit::script::Module module;
 //      try
@@ -1948,6 +1948,9 @@ void InterPrediction::uniEnhancementWithCnn(const PredictionUnit &pu, PelUnitBuf
   {
     cerr << "error in forward\n";
   }
+  xFree(src_input);
+  img_src_8.release();
+  normal_img_src.release();
 }
 
 void InterPrediction::motionCompensation( CodingUnit &cu, const RefPicList &eRefPicList

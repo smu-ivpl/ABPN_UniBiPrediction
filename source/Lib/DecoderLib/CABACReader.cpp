@@ -1224,8 +1224,10 @@ void CABACReader::cu_pred_data( CodingUnit &cu )
   {
     prediction_unit( pu, mrgCtx );
     // yw.lee ==========================================================================================================
-    pu.cnn_flag = m_BinDecoder.decodeBinEP( );
-//    std::cout << "cnn_flag: " << pu.cnn_flag << std::endl;
+    uint32_t symbol = m_BinDecoder.decodeBin( Ctx::CnnFlag() );
+//    uint32_t symbol2 = m_BinDecoder.decodeBin( Ctx::CnnFlag() );
+    pu.cnnFlag       = symbol;
+    std::cout << "symbol: " << symbol << std::endl;
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   }
 

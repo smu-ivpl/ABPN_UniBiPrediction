@@ -193,6 +193,10 @@ public:
 class ContextSetCfg
 {
 public:
+  // yw.lee ===================================
+  static const CtxSet   CnnFlag;
+  /////////////////////////////////////////////
+
   // context sets: specify offset and size
   static const CtxSet   SplitFlag;
   static const CtxSet   SplitQtFlag;

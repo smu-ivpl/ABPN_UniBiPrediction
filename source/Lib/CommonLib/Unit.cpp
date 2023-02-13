@@ -526,6 +526,7 @@ void PredictionUnit::initData()
   multiRefIdx = 0;
 
   // inter data
+  cnnFlag     = false; // yw.lee
   mergeFlag   = false;
   regularMergeFlag = false;
   mergeIdx    = MAX_UCHAR;
