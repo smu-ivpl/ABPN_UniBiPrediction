@@ -198,7 +198,12 @@ public:
   uint8_t    skipSbtByRDCost        ( int width, int height, int mtDepth, uint8_t sbtIdx, uint8_t sbtPos, double bestCost, Distortion distSbtOff, double costSbtOff, bool rootCbfSbtOff );
   bool       getSkipSbtAll          ()                 { return m_skipSbtAll; }
   void       setSkipSbtAll          ( bool skipAll )   { m_skipSbtAll = skipAll; }
-  uint8_t    getSbtRdoOrder         ( uint8_t idx )    { assert( m_sbtRdoOrder[idx] < NUMBER_SBT_MODE ); assert( (uint32_t)( m_estMinDistSbt[m_sbtRdoOrder[idx]] >> 2 ) < ( MAX_UINT >> 1 ) ); return m_sbtRdoOrder[idx]; }
+  uint8_t    getSbtRdoOrder         ( uint8_t idx )
+  {
+    assert( m_sbtRdoOrder[idx] < NUMBER_SBT_MODE );
+    assert( (uint32_t)( m_estMinDistSbt[m_sbtRdoOrder[idx]] >> 2 ) < ( MAX_UINT >> 1 ) );
+    return m_sbtRdoOrder[idx];
+  }
   Distortion getEstDistSbt          ( uint8_t sbtMode) { return m_estMinDistSbt[sbtMode]; }
   void       initTuAnalyzer         ()                 { m_estMinDistSbt[NUMBER_SBT_MODE] = std::numeric_limits<uint64_t>::max(); m_skipSbtAll = false; }
   void       setHistBestTrs         ( uint8_t sbtInfo, uint8_t mtsIdx ) { m_histBestSbt = sbtInfo; m_histBestMtsIdx = mtsIdx; }

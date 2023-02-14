@@ -49,6 +49,7 @@
 #include "Hash.h"
 #include "MCTS.h"
 #include <deque>
+#include "PyTorchHelper.h"
 
 #if ENABLE_SPLIT_PARALLELISM
 
@@ -96,6 +97,14 @@ typedef std::list<SEI*> SEIMessages;
 
 struct Picture : public UnitArea
 {
+  // yw.lee ============================================================================================================
+  void reconBufEnhancement(PyTorchHelper* torchHelper);
+  void changeCnn2org();
+  void releaseCnnBuf();
+  Pel *cnn_buff = nullptr;
+  Pel *org_buff = nullptr;
+  int psize = 128;
+  //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   uint32_t margin;
   Picture();
 

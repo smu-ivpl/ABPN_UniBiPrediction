@@ -259,6 +259,11 @@ void Picture::destroy()
       m_spliceIdx = NULL;
     }
   }
+
+  // yw.lee ====================================
+  xFree(cnn_buff); cnn_buff = nullptr;
+  xFree(org_buff); org_buff = nullptr;
+  //////////////////////////////////////////////
 }
 
 void Picture::createTempBuffers( const unsigned _maxCUSize )
@@ -1385,4 +1390,137 @@ void Picture::addPictureToHashMapForInter()
       delete[] bIsBlockSame[i][j];
     }
   }
+}
+
+void Picture::reconBufEnhancement(PyTorchHelper *torchHelper)
+{
+  const PictureType &type = PIC_RECONSTRUCTION;
+  CPelBuf recon_buf = M_BUFS(jId, type).getBuf(COMPONENT_Y);  // 마진없는 리컨 버퍼
+
+  int buf_stride = recon_buf.stride;  // 리컨 버퍼의 가로 크기
+  Pel *recon = (Pel *)recon_buf.buf; // 마진없는 리컨버퍼의 화소 시작점
+
+  int buf_h = (int)recon_buf.height;
+  int buf_w = (int)recon_buf.width;
+
+  if ((buf_h % psize) != 0)
+  {
+    int bcnt = (buf_h / psize) + 1;
+    buf_h = psize * bcnt;
+  }
+  if ((buf_w % psize) != 0)
+  {
+    int bcnt = (buf_w / psize) + 1;
+    buf_w = psize * bcnt;
+  }
+
+  if ( this->cnn_buff == nullptr )
+  {
+    this->cnn_buff = (Pel *) xMalloc(Pel, buf_h * buf_w); // 원본 버퍼
+    this->org_buff = (Pel *) xMalloc(Pel, buf_h * buf_w);
+    auto buffer = (float *) xMalloc(float, psize * psize);
+
+    cv::Mat_<Pel> testImg1 = cv::Mat(buf_h, buf_w, CV_8UC1);
+    cv::Mat_<Pel> testImg2 = cv::Mat(buf_h, buf_w, CV_8UC1);
+
+    for (int i = 0; i < buf_h; i += psize)  // 패치 크기 단위로 스트라이드
+    {
+      for (int j = 0; j < buf_w; j += psize)
+      {
+        for (int k = 0; k < psize; k++)
+        {
+          for (int l = 0; l < psize; l++)
+          {
+            Pel val = recon[(i + k) * buf_stride + j + l];
+            this->org_buff[(i + k) * buf_w + j + l] = val; // 원본 버퍼에도 저장
+            buffer[k * psize + l] = (float) (val / 1023.);
+
+            testImg1(i + k, j + l) = val >> 2;
+          }
+        }
+
+        torch::Tensor input_tensor = torch::from_blob(buffer, { psize, psize, 1 }, torch::kFloat).to(torchHelper->device);
+
+        input_tensor = input_tensor.permute({ 2, 0, 1 });
+        input_tensor = input_tensor.unsqueeze(0);
+
+        vector<c10::IValue> input_tensors;
+        input_tensors.push_back(input_tensor);   // {1, channels, height, width}
+
+        auto output_     = torchHelper->model.forward(input_tensors);
+        at::Tensor output_net       = output_.toTensor();
+
+        auto output_tensor = output_net.cpu().detach();
+
+        memcpy(buffer, (float *) output_tensor.data_ptr(), sizeof(float) * psize * psize);
+        //      f32TempPatch.convertTo(uiTempPatch, CV_16UC1, 1.0 * 1023, 0);
+
+        for (int k = 0; k < psize; k++)
+        {
+          for (int l = 0; l < psize; l++)
+          {
+            Pel val = (Pel) (buffer[k * psize + l] * 1023);
+            if (val < 0)
+            {
+              val = 0;
+            }
+            else if (val > 1023)
+            {
+              val = 1023;
+            }
+            cnn_buff[(i + k) * buf_w + j + l] = val;
+
+            testImg2(i + k, j + l) = val >> 2;
+          }
+        }
+      }
+    }
+//    cv::imwrite("a.png", testImg1);
+//    cv::imwrite("b.png", testImg2);
+  }
+  // 교체
+  for (int i = 0; i < buf_h; i ++ )
+  {
+    for (int j = 0; j < buf_w; j ++ )
+    {
+      recon[ i * buf_stride + j ] = cnn_buff[ i * buf_w + j ];
+    }
+  }
+}
+
+void Picture::changeCnn2org()
+{
+  const PictureType &type = PIC_RECONSTRUCTION;
+  CPelBuf recon_buf = M_BUFS(jId, type).getBuf(COMPONENT_Y);  // 마진없는 리컨 버퍼
+
+  int buf_stride = recon_buf.stride;  // 리컨 버퍼의 가로 크기
+  Pel *recon = (Pel *)recon_buf.buf; // 마진없는 리컨버퍼의 화소 시작점
+
+  int buf_h = (int)recon_buf.height;
+  int buf_w = (int)recon_buf.width;
+
+  if ((buf_h % psize) != 0)
+  {
+    int bcnt = (buf_h / psize) + 1;
+    buf_h = psize * bcnt;
+  }
+  if ((buf_w % psize) != 0)
+  {
+    int bcnt = (buf_w / psize) + 1;
+    buf_w = psize * bcnt;
+  }
+
+  for ( int i = 0; i < buf_h; i ++ )
+  {
+    for ( int j = 0; j < buf_w; j ++ )
+    {
+      recon[ i * buf_stride + j ] = org_buff[ i * buf_w + j ];
+    }
+  }
+}
+
+void Picture::releaseCnnBuf()
+{
+  xFree(cnn_buff); cnn_buff = nullptr;
+  xFree(org_buff); org_buff = nullptr;
 }

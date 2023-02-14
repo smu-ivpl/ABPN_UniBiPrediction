@@ -1759,7 +1759,8 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
     }
   }
   // yw.lee ============================================================================================================
-  if ((m_bUniCnnApplied || (!(pu.cs->pcv->isEncoder) && pu.cnnFlag)) && luma)
+//  if ((m_bUniCnnApplied || (!(pu.cs->pcv->isEncoder) && pu.cnnFlag)) && luma)
+  if ((m_bUniCnnApplied || (!(pu.cs->pcv->isEncoder) && pu.cnnFlag))) // TODO: luma 만 적용 시 RDO 에러, 이유는?
   {
     size_t cu_w    = predBuf.bufs[0].width;
     size_t cu_h    = predBuf.bufs[0].height;
@@ -1791,7 +1792,7 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
         uiSad_b = cDistParam.distFunc( cDistParam );
 //        cost_b = (double)uiSad_b + (double)this->m_uiCurrBits * m_uiCurrSqrtLambda;
 
-        if (uiSad_a <= uiSad_b) // cnn 비용이 더 높으면 원상태로 복구
+        if (uiSad_a < uiSad_b) // cnn 비용이 더 높으면 원상태로 복구
         {
           predBuf.bufs[0].copyFrom(CPelBuf(temp, predBuf.bufs[0].stride, pu.lumaSize()));
           //        std::cout << "cost_a: " << cost_a << " cost_b: " << cost_b << std::endl;
@@ -1804,6 +1805,7 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
         xFree(temp);
       }
     }
+    xFree(tempRDCost);
   }
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   return;

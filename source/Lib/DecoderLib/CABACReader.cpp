@@ -1227,7 +1227,7 @@ void CABACReader::cu_pred_data( CodingUnit &cu )
     uint32_t symbol = m_BinDecoder.decodeBin( Ctx::CnnFlag() );
 //    uint32_t symbol2 = m_BinDecoder.decodeBin( Ctx::CnnFlag() );
     pu.cnnFlag       = symbol;
-    std::cout << "symbol: " << symbol << std::endl;
+    std::cout << "cnnFlag: " << symbol << "\tw: " << pu.Y().width << "\th: " << pu.Y().height << std::endl;
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   }
 

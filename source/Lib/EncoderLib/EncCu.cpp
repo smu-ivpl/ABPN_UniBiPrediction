@@ -903,6 +903,9 @@ void EncCu::xCompressCU( CodingStructure*& tempCS, CodingStructure*& bestCS, Par
     }
   } while( m_modeCtrl->nextMode( *tempCS, partitioner ) );
 
+  // yw.lee ====================
+
+  //////////////////////////////
 
   //////////////////////////////////////////////////////////////////////////
   // Finishing CU

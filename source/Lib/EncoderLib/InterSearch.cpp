@@ -3311,6 +3311,11 @@ void InterSearch::xMotionEstimation(PredictionUnit& pu, PelUnitBuf& origBuf, Ref
   int    iSrchRng   = (bBi ? m_bipredSearchRange : m_iSearchRange);
   double fWeight    = 1.0;
 
+  // yw.lee =====================================
+  int idx = (m_pcEncCfg->getBaseQP() - 22) / 5;
+  pu.cu->slice->getRefPic(eRefPicList, iRefIdxPred)->reconBufEnhancement(this->m_pTorchHelperUni[idx]);
+  ///////////////////////////////////////////////
+
   PelUnitBuf  origBufTmp = m_tmpStorageLCU.getBuf( UnitAreaRelative(*pu.cu, pu) );
   PelUnitBuf* pBuf       = &origBuf;
 
@@ -3379,6 +3384,7 @@ void InterSearch::xMotionEstimation(PredictionUnit& pu, PelUnitBuf& origBuf, Ref
   m_currRefPicList = eRefPicList;
   m_currRefPicIndex = iRefIdxPred;
   m_skipFracME = false;
+
   //  Do integer search
   if( ( m_motionEstimationSearchMethod == MESEARCH_FULL ) || bBi || bQTBTMV )
   {
@@ -3455,8 +3461,12 @@ void InterSearch::xMotionEstimation(PredictionUnit& pu, PelUnitBuf& origBuf, Ref
       m_integerMv2Nx2N[eRefPicList][iRefIdxPred] = rcMv;
     }
   }
+  // yw.lee =========================================================
+  pu.cu->slice->getRefPic(eRefPicList, iRefIdxPred)->changeCnn2org();
+  ///////////////////////////////////////////////////////////////////
 
   DTRACE( g_trace_ctx, D_ME, "%d %d %d :MECostFPel<L%d,%d>: %d,%d,%dx%d, %d", DTRACE_GET_COUNTER( g_trace_ctx, D_ME ), pu.cu->slice->getPOC(), 0, ( int ) eRefPicList, ( int ) bBi, pu.Y().x, pu.Y().y, pu.Y().width, pu.Y().height, ruiCost );
+
   // sub-pel refinement for sub-pel resolution
   if ( pu.cu->imv == 0 || pu.cu->imv == IMV_HPEL )
   {

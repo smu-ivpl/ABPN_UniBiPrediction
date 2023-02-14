@@ -491,8 +491,8 @@ void EncLib::init( bool isFieldCoding, AUWriterIf* auWriterIf )
   {
     xInitScalingLists( sps0, aps0 );
   }
-  if (m_resChangeInClvsEnabled)
   {
+  if (m_resChangeInClvsEnabled)
     xInitScalingLists( sps0, *m_apsMap.getPS( ENC_PPS_ID_RPR ) );
   }
   if (getUseCompositeRef())
