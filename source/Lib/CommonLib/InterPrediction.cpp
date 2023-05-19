@@ -1635,9 +1635,6 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
   // Therefore for 4:0:0, "chroma" is not changed to false.
   CHECK_(predBufWOBIO && pu.ciipFlag, "the case should not happen!");
 
-  // [YJC] for uni-prediction block enhancement
-  bool BiPredApplied = false;
-
   if (!pu.cs->pcv->isEncoder)
   {
     if (CU::isIBC(*pu.cu))
@@ -1755,155 +1752,215 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
       else
       {
         xPredInterBi(pu, predBuf, luma, chroma, predBufWOBIO);
-        BiPredApplied = true;
       }
     }
   }
-  // [YJC] uni-prediction block enhancement
-  if(!BiPredApplied)
+  
+  //  [YJC] uni-prediction block enhancement
+  //  int cu_poc = pu.cs->slice->getPOC();
+  //  int cu_x = pu.cu->Y().x;
+  //  int cu_y = pu.cu->Y().y;
+  int cu_w = pu.cu->Y().width;
+  int cu_h = pu.cu->Y().height;
+  //  bool skip_mode = pu.cu->skip;
+  //  bool merge_mode = pu.mergeFlag;
+  //  int slice_qp   = pu.cs->slice->getSliceQp();
+  //  int ref_slice_qp_l0 = 0;
+  //  int ref_slice_qp_l1 = 0;
+  int inter_dir = 0; // 1 : uni l0, 2 : uni l1, 3 : bi
+  if (pu.refIdx[REF_PIC_LIST_1] < 0 && pu.refIdx[REF_PIC_LIST_0] >= 0){
+    //  ref_slice_qp_l0 = pu.cs->slice->getRefPic(REF_PIC_LIST_0, pu.refIdx[REF_PIC_LIST_0])->cs->slice->getSliceQp();
+    inter_dir = 1;
+  }
+  else if (pu.refIdx[REF_PIC_LIST_0] < 0 && pu.refIdx[REF_PIC_LIST_1] >= 0){
+    //  ref_slice_qp_l1 = pu.cs->slice->getRefPic(REF_PIC_LIST_1, pu.refIdx[REF_PIC_LIST_1])->cs->slice->getSliceQp();
+    inter_dir = 2;
+  }
+  else if (pu.refIdx[REF_PIC_LIST_0] >= 0 && pu.refIdx[REF_PIC_LIST_1] >= 0){
+    //  ref_slice_qp_l0 = pu.cs->slice->getRefPic(REF_PIC_LIST_0, pu.refIdx[REF_PIC_LIST_0])->cs->slice->getSliceQp();
+    //  ref_slice_qp_l1 = pu.cs->slice->getRefPic(REF_PIC_LIST_1, pu.refIdx[REF_PIC_LIST_1])->cs->slice->getSliceQp();
+    inter_dir = 3;
+  }
+  //  bool subblock_mode = false;
+  //  if (pu.cu->imv == 0 || pu.cu->imv == IMV_HPEL){
+  //    subblock_mode = true;
+  //  }
+  //  bool affine_mode = pu.cu->affine;
+  //  int tid = pu.cs->slice->getTLayer();
+  if((inter_dir == 1 || inter_dir == 2) && ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32)))
   {
-    int cu_w    = predBuf.bufs[0].width;
-    int cu_h    = predBuf.bufs[0].height;
     int cu_size = cu_w * cu_h;
-
-    std::string model_name = "att_uni_prediction";
-    int slice_qp = pu.cs->slice->getSliceQp();
-    int model_qp  = 22;
-    int qp_diff   = abs(slice_qp - 22);
-    if (abs(slice_qp - 27) < qp_diff){
-        model_qp = 27;
-        qp_diff = abs(slice_qp - 27);
-    }
-    if (abs(slice_qp - 32) < qp_diff){
-        model_qp = 32;
-        qp_diff = abs(slice_qp - 32);
-    }
-    if (abs(slice_qp - 37) < qp_diff){
-        model_qp = 37;
-        qp_diff = abs(slice_qp - 37);
-    }
-    if (abs(slice_qp - 42) < qp_diff){
-        model_qp = 42;
-        qp_diff = abs(slice_qp - 42);
-    }
+    std::string model_name = "uni_prediction_aupn_one_predonly"; // AUPN_BVIDVC_D_PredOnly_Copy_net_g_190000
     std::string model_path = "/home/media/SMU_Project/VVCSoftware_VTM11.0_nnvc1.0_UniBiPrediction_Deep/model/"
-                                 + model_name + "_q" + to_string(model_qp) + ".pt";
+                             + model_name + ".pt";
     at::Device device = at::kCUDA;
-//        at::Device device = at::kCPU;
+    //  at::Device device = at::kCPU;
+    
+    // Prediction Block
+    // -----------------------------------------------------------------------------------------------------------------
+    const Pel *   predSrcY = predBuf.bufs[0].buf;
+    int predSrcY_stride = predBuf.Y().stride;
+    const ClpRng &predSrcY_clpRng = pu.cu->slice->clpRng(COMPONENT_Y);
 
-    if ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32))
+    unsigned char *predSrcY_uchar;
+    predSrcY_uchar = (unsigned char *) xMalloc(unsigned char, cu_h * cu_w);
+
+    for (int h = cu_h; h != 0; h--)
     {
-      const Pel    *src       = predBuf.bufs[0].buf;
-      int           cu_stride = predBuf.bufs[0].stride;
-      const ClpRng &cu_clpRng = pu.cu->slice->clpRng(COMPONENT_Y);
-      uchar *src_input;
-      src_input = (uchar *) xMalloc(uchar, cu_h * cu_w);
+      for (int n = 0; n < cu_w; n++)
+      {
+        predSrcY_uchar[((cu_h - h) * cu_w) + n] = (unsigned char) (predSrcY[n] >> 2);
+      }
+      predSrcY += predSrcY_stride;
+    }
+
+    cv::Mat img_predSrcY_8(cv::Size(cu_w, cu_h), CV_8UC1, predSrcY_uchar);
+    
+    cv::Mat normal_img_predSrcY;
+    img_predSrcY_8.convertTo(normal_img_predSrcY, CV_32FC1, 1.0 / 255, 0);
+
+    xFree(predSrcY_uchar);
+    img_predSrcY_8.release();
+
+    std::vector<torch::jit::IValue> input_tensors_final;
+
+    torch::Tensor input_tensor_pred =
+      torch::from_blob(normal_img_predSrcY.data, { normal_img_predSrcY.rows, normal_img_predSrcY.cols, 1 }, torch::kFloat)
+        .to(device);
+    input_tensor_pred               = input_tensor_pred.unsqueeze(0); // [1, height, width, channel(1)]
+    // -----------------------------------------------------------------------------------------------------------------
+    
+    // Additional Info (Optional)
+    // -----------------------------------------------------------------------------------------------------------------
+    //    torch::Tensor input_tensor_skip = torch::zeros_like(input_tensor_pred);
+    //    float skip_mode_value = 1.0;
+    //    if(!skip_mode){
+    //      skip_mode_value = 0.01;
+    //    }
+    //    input_tensor_skip.fill_(skip_mode_value); // [1, height, width, channel(1)]
+    //
+    //    torch::Tensor input_tensor_merge = torch::zeros_like(input_tensor_pred);
+    //    float merge_mode_value = 1.0;
+    //    if(!merge_mode){
+    //      merge_mode_value = 0.01;
+    //    }
+    //    input_tensor_merge.fill_(merge_mode_value); // [1, height, width, channel(1)]
+    //
+    //    torch::Tensor input_tensor_slice_qp = torch::zeros_like(input_tensor_pred);
+    //    input_tensor_slice_qp.fill_((float) (slice_qp / 63.)); // [1, height, width, channel(1)]
+    //
+    //    int ref_slice_qp = 32;
+    //    if(ref_slice_qp_l0 > 0){
+    //      ref_slice_qp = ref_slice_qp_l0;
+    //    }
+    //    else if(ref_slice_qp_l1 > 0){
+    //      ref_slice_qp = ref_slice_qp_l1;
+    //    }
+    //    torch::Tensor input_tensor_ref_slice_qp = torch::zeros_like(input_tensor_pred);
+    //    input_tensor_ref_slice_qp.fill_((float) (ref_slice_qp / 63.)); // [1, height, width, channel(1)]
+    //
+    //    torch::Tensor input_tensor_subblock = torch::zeros_like(input_tensor_pred);
+    //    float subblock_mode_value = 1.0;
+    //    if(!subblock_mode){
+    //      subblock_mode_value = 0.01;
+    //    }
+    //    input_tensor_subblock.fill_(subblock_mode_value); // [1, height, width, channel(1)]
+    //
+    //    torch::Tensor input_tensor_affine = torch::zeros_like(input_tensor_pred);
+    //    float affine_mode_value = 1.0;
+    //    if(!affine_mode){
+    //      affine_mode_value = 0.01;
+    //    }
+    //    input_tensor_affine.fill_(affine_mode_value); // [1, height, width, channel(1)]
+    //
+    //    torch::Tensor input_tensor_tid = torch::zeros_like(input_tensor_pred);
+    //    input_tensor_tid.fill_((float) (tid / 5.)); // [1, height, width, channel(1)]
+    
+    //    torch::Tensor input_tensor = torch::cat({ input_tensor_pred,
+    //                                              input_tensor_skip,
+    //                                              input_tensor_merge,
+    //                                              input_tensor_slice_qp,
+    //                                              input_tensor_ref_slice_qp,
+    //                                              input_tensor_subblock,
+    //                                              input_tensor_affine,
+    //                                              input_tensor_tid });
+    //    input_tensor               = input_tensor.permute({ 0, 3, 1, 2 }); // [info_channel(8), channel(1), height, width]
+    //    input_tensor               = input_tensor.unsqueeze(0); // [1, info_channel(8), channel(1), height, width]
+    // -----------------------------------------------------------------------------------------------------------------
+    
+    // Final Input
+    // -----------------------------------------------------------------------------------------------------------------
+    input_tensor_pred               = input_tensor_pred.permute({ 0, 3, 1, 2 }); // [info_channel(1), channel(1), height, width]
+    input_tensor_pred               = input_tensor_pred.unsqueeze(0); // [1, info_channel(1), channel(1), height, width]
+
+    input_tensors_final.push_back(input_tensor_pred);   // [1, info_channel(8), channel(1), height, width]
+
+    normal_img_predSrcY.release();
+    // -----------------------------------------------------------------------------------------------------------------
+    
+    // Loading CNN Model and Enhancing Prediction Block
+    // -----------------------------------------------------------------------------------------------------------------
+    torch::jit::script::Module module;
+    try
+    {
+      module = torch::jit::load(model_path, device);
+      module.eval();
+    }
+    catch (const c10::Error &e)
+    {
+      std::cerr << "error loading the model\n";
+    }
+
+    try
+    {
+      at::Tensor output_net;
+      try
+      {
+        auto output_net_ = module.forward(input_tensors_final);
+        output_net       = output_net_.toTensor();
+
+      }
+      catch (const c10::Error &e)
+      {
+        std::cerr << "error\n";
+      }
+      auto output_tensor = output_net.cpu().detach();
+
+      float *preds;
+      preds = (float *) xMalloc(float, cu_h * cu_w);
+      std::memcpy(preds, (float *) output_tensor.data_ptr(), sizeof(float) * cu_size);
+
+      Pel *dstCNN;
+      dstCNN = (Pel *) xMalloc(Pel, cu_h * cu_w);
 
       for (int h = cu_h; h != 0; h--)
       {
         for (int n = 0; n < cu_w; n++)
         {
-          src_input[((cu_h - h) * cu_w) + n] = (uchar) (src[n] >> 2);
-        }
-        src += cu_stride;
-      }
-      cv::Mat img_src_8(cv::Size(cu_w, cu_h), CV_8UC1, src_input);
-
-      cv::Mat normal_img_src;
-      img_src_8.convertTo(normal_img_src, CV_32FC1, 1.0 / 255, 0);
-
-      xFree(src_input);
-
-      img_src_8.release();
-
-      std::vector<torch::jit::IValue> input_tensors_final;
-
-      for (int i = 0; i < normal_img_src.rows; i++)
-      {
-        for (int j = 0; j < normal_img_src.cols; j++)
-        {
-          if (normal_img_src.at<float>(i, j) < 0.0)
+          if (isnan(preds[((cu_h - h) * cu_w) + n]))
           {
-            normal_img_src.at<float>(i, j) = 0.0;
+            Pel temp = 0;
+            dstCNN[((cu_h - h) * cu_w) + n] = temp;
           }
-          else if (normal_img_src.at<float>(i, j) > 1.0)
+          else
           {
-            normal_img_src.at<float>(i, j) = 1.0;
+            Pel temp = (Pel) ClipPel((Pel) (preds[((cu_h - h) * cu_w) + n] * 1023), predSrcY_clpRng);
+            dstCNN[((cu_h - h) * cu_w) + n] = temp;
           }
         }
       }
 
-      torch::Tensor input_tensor =
-        torch::from_blob(normal_img_src.data, { normal_img_src.rows, normal_img_src.cols, 1 }, torch::kFloat)
-          .to(device);
+      predBuf.bufs[0].copyFrom(CPelBuf(dstCNN, predSrcY_stride, pu.lumaSize()));
 
-      input_tensor = input_tensor.permute({ 2, 0, 1 });
-      input_tensor = input_tensor.unsqueeze(0);
-
-      input_tensors_final.push_back(input_tensor);   // {1, channels, height, width}
-
-      normal_img_src.release();
-
-      torch::jit::script::Module module;
-      try
-      {
-        module = torch::jit::load(model_path, device);
-        module.eval();
-      }
-      catch (const c10::Error &e)
-      {
-        std::cerr << "error loading the model\n";
-      }
-
-      try
-      {
-        at::Tensor output_net;
-        try
-        {
-          auto output_net_ = module.forward(input_tensors_final);
-          output_net       = output_net_.toTensor();
-        }
-        catch (const c10::Error &e)
-        {
-          std::cerr << "error\n";
-        }
-        auto output_tensor = output_net.cpu().detach();
-
-        float *preds;
-        preds = (float *) xMalloc(float, cu_h *cu_w);
-        std::memcpy(preds, (float *) output_tensor.data_ptr(), sizeof(float) * cu_size);
-
-        Pel *dstCNN;
-        dstCNN = (Pel *) xMalloc(Pel, cu_h * cu_w);
-
-        for (int h = cu_h; h != 0; h--)
-        {
-          for (int n = 0; n < cu_w; n++)
-          {
-            if (isnan(preds[((cu_h - h) * cu_w) + n]))
-            {
-              Pel temp = 0;
-              dstCNN[((cu_h - h) * cu_w) + n] = temp;
-            }
-            else
-            {
-              Pel temp = (Pel) ClipPel((Pel) (preds[((cu_h - h) * cu_w) + n] * 1023), cu_clpRng);
-              dstCNN[((cu_h - h) * cu_w) + n] = temp;
-            }
-          }
-        }
-
-        predBuf.bufs[0].copyFrom(CPelBuf(dstCNN, cu_stride, pu.lumaSize()));
-
-        xFree(preds);
-        xFree(dstCNN);
-      }
-      catch (...)
-      {
-        std::cerr << "error in forward\n";
-      }
+      xFree(preds);
+      xFree(dstCNN);
     }
-  }
+    catch (...)
+    {
+      std::cerr << "error in forward\n";
+    }
+    // -----------------------------------------------------------------------------------------------------------------
+  } // Do CNN-based uni-prediction block enhancement
 
   return;
 }
