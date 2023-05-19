@@ -171,10 +171,14 @@ Models
   
   ./model/att_uni_prediction_q42.pt
   
+- Uni-Enhancement Models (One teacher model: it was trained using class D dataset.)
+
+  ./model/uni_prediction_aupn_one_predonly.pt
+  
 - Bi-Prediction Model (One teacher model)
 
   ./model/bi_prediction_abpn_one_t.pt
   
 You have to modify the model path in source code.
 
-(./source/Lib/CommonLib/InterPrediction.cpp lines 1378 and 1789) 
+(./source/Lib/CommonLib/InterPrediction.cpp lines 1378 and 1793)  
