@@ -1453,7 +1453,7 @@ bool EncAppCfg::parseCfg( int argc, char* argv[] )
                                                                                                                   " E.g. --TemporalFilterStrengthFrame8 0.95 will enable GOP based temporal filter at every 8th frame with strength 0.95");
 // yw.lee >>>
   opts.addOptions()
-    ("gpu",                                             m_iGPU,                                          -1, "disable/enable gpu usage and selection");
+    ("NeuralNetworkDevice,-device",                   m_iGPU,                                          -1, "disable/enable gpu usage and selection (-1: CPU (default), 0,1,2,3: GPU");
 // <<< yw.lee
   // clang-format on
 
@@ -3815,11 +3815,11 @@ void EncAppCfg::xPrintParameter()
   // yw.lee >>>
   if (m_iGPU < 0)
   {
-    msg(DETAILS_, "CNN Device                           : CPU\n");
+    msg(DETAILS_, "Neural Network Device                  : CPU (default)\n");
   }
   else
   {
-    msg(DETAILS_, "CNN Device                           : GPU [%d]\n", m_iGPU);
+    msg(DETAILS_, "Neural Network Device                  : GPU-%d\n", m_iGPU);
   }
   // <<< yw.lee
 

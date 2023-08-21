@@ -8,7 +8,7 @@ PyTorchHelper::PyTorchHelper(string fpath, int nGpu)
 {
   try
   {
-    assert(nGpu < 4);
+    assert(-1 <= nGpu); assert(nGpu < 4);
     bool useGpu = false;
     if (nGpu >= 0)
     {
