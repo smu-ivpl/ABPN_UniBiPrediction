@@ -865,6 +865,22 @@ void CABACWriter::cu_pred_data( const CodingUnit& cu )
   for( auto &pu : CU::traversePUs( cu ) )
   {
     prediction_unit( pu );
+
+    // yw.lee >>> CNN 플래그 값 전송
+    int pu_w = pu.Y().width;
+    int pu_h = pu.Y().height;
+    if (((pu_w == 128 && pu_h == 128) || (pu_w == 64 && pu_h == 64) || (pu_w == 32 && pu_h == 32)))
+    {
+      if (pu.cnnFlag)
+      {
+        m_BinEncoder.encodeBinEP(1);
+      }
+      else
+      {
+        m_BinEncoder.encodeBinEP(0);
+      }
+    }
+    // <<< yw.lee
   }
 
   imv_mode   ( cu );

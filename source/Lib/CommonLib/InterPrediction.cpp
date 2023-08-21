@@ -1612,6 +1612,7 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
   , PelUnitBuf* predBufWOBIO /*= NULL*/
 )
 {
+  bool b_biApplied = false;     // <<< yw.lee
   // Note: there appears to be an interaction with weighted prediction that
   // makes the code follow different paths if chroma is on or off (in the encoder).
   // Therefore for 4:0:0, "chroma" is not changed to false.
@@ -1734,16 +1735,107 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
       else
       {
         xPredInterBi(pu, predBuf, luma, chroma, predBufWOBIO);
+        b_biApplied = true;     // <<< yw.lee
       }
     }
   }
-  
-  //  [YJC] uni-prediction block enhancement
 
-  int cu_w = pu.cu->Y().width;
-  int cu_h = pu.cu->Y().height;
+  // yw.lee >>>
+  int pu_w    = pu.Y().width;
+  int pu_h    = pu.Y().height;
+  if (pu.cs->pcv->isEncoder)    // Uni Enhancement with RD-Competition for Encoder-side
+  {
+//    if ((pu_w == 128 && pu_h == 128) || (pu_w == 64 && pu_h == 64) || (pu_w == 32 && pu_h == 32))
+//    {
+//      pu.cu->cnnFlag = true;
+//      return;
+//    }
+//    if (xCheckUniCondition(pu))
+    if (((pu_w == 128 && pu_h == 128) || (pu_w == 64 && pu_h == 64) || (pu_w == 32 && pu_h == 32)) && !b_biApplied)
+    {
+      int buf_stride = predBuf.Y().stride;
+      Pel* predSrcY = predBuf.bufs[0].buf;
 
-  int inter_dir = 0; // 1 : uni l0, 2 : uni l1, 3 : bi
+      // 참조 버퍼 복사
+      Pel *tempPredBuf = xMalloc(Pel, pu_w * pu_h);
+      for (int h = pu_h; h != 0; h--)
+      {
+        for (int n = 0; n < pu_w; n++)
+        {
+          tempPredBuf[((pu_h - h) * pu_w) + n] = predSrcY[n];
+        }
+        predSrcY += buf_stride;
+      }
+
+      // SAD 계산을 위한 파라미터 설정
+      DistParam distParam;
+      const bool bUseHadamard = pu.cu->slice->getDisableSATDForRD();
+      m_pcRdCost->setDistParam (distParam, pu.cs->getOrgBuf().Y(), predBuf.Y(),
+                               pu.cs->sps->getBitDepth (CHANNEL_TYPE_LUMA),
+                               COMPONENT_Y, bUseHadamard);
+
+      // 변환 전 cost 계산
+      Distortion sadA = distParam.distFunc(distParam);
+      uint64_t tempBits = 1;
+      double costA = (double)sadA + (double)tempBits * m_pcRdCost->getLambda();
+
+      // CNN 적용
+      xEnhanceUniPredictionWithCNN(pu, predBuf);
+      pu.cnnFlag = true;
+      return;
+
+      // 변환 후 cost 계산
+      Distortion sadB = distParam.distFunc(distParam);
+      tempBits += 1;
+      double costB = (double)sadB + (double)tempBits * m_pcRdCost->getLambda();
+
+      // cost 비교
+      if (costA > costB)
+      {
+        // 플래그 설정
+        pu.cnnFlag = true;
+      }
+      else
+      {
+        // 참조 버퍼 복구
+        predSrcY = predBuf.bufs[0].buf;
+        for (int h = pu_h; h != 0; h--)
+        {
+          for (int n = 0; n < pu_w; n++)
+          {
+            predSrcY[n] = tempPredBuf[((pu_h - h) * pu_w) + n];
+          }
+          predSrcY += buf_stride;
+        }
+      }
+
+      // 메모리 해제
+      xFree(tempPredBuf);
+    }
+  }
+  else    // for Decoder-side
+  {
+//    if (xCheckUniCondition(pu))
+//    {
+//      cout << "Uni" << endl;
+//    }
+//    if (((pu_w == 128 && pu_h == 128) || (pu_w == 64 && pu_h == 64) || (pu_w == 32 && pu_h == 32)) && pu.cnnFlag)
+    if (pu.cnnFlag)
+    {
+      // CNN 적용
+      xEnhanceUniPredictionWithCNN(pu, predBuf);
+    }
+  }
+  // <<< yw.lee
+}
+
+
+bool InterPrediction::xCheckUniCondition(PredictionUnit &pu) const
+{
+  int pu_w      = pu.Y().width;
+  int pu_h      = pu.Y().height;
+
+  int inter_dir = 0;   // 1 : uni l0, 2 : uni l1, 3 : bi
   if (pu.refIdx[REF_PIC_LIST_1] < 0 && pu.refIdx[REF_PIC_LIST_0] >= 0){
 
     inter_dir = 1;
@@ -1756,98 +1848,117 @@ void InterPrediction::motionCompensation( PredictionUnit &pu, PelUnitBuf &predBu
 
     inter_dir = 3;
   }
+  return ((inter_dir == 1 || inter_dir == 2) && ((pu_w == 128 && pu_h == 128) || (pu_w == 64 && pu_h == 64) || (pu_w == 32 && pu_h == 32)));
+}
 
-  if ((inter_dir == 1 || inter_dir == 2) &&
-      ((cu_w == 128 && cu_h == 128) || (cu_w == 64 && cu_h == 64) || (cu_w == 32 && cu_h == 32)))
+
+void InterPrediction::xEnhanceUniPredictionWithCNN(PredictionUnit &pu,
+                                                   PelUnitBuf &predBuf) {//  [YJC] uni-prediction block enhancement
+  int cu_w = pu.Y().width;
+  int cu_h = pu.Y().height;
+  int cu_size = cu_w * cu_h;
+
+  Pel* predSrcY = predBuf.bufs[0].buf;
+  int predSrcY_stride = predBuf.Y().stride;
+  const ClpRng &predSrcY_clpRng = pu.cu->slice->clpRng(COMPONENT_Y);
+
+  unsigned char *predSrcY_uchar;
+  predSrcY_uchar = (unsigned char *) xMalloc(unsigned char, cu_h *cu_w);
+
+  for (int h = cu_h; h != 0; h--)
   {
-    int cu_size = cu_w * cu_h;
+    for (int n = 0; n < cu_w; n++)
+    {
+      predSrcY_uchar[((cu_h - h) * cu_w) + n] = (unsigned char) (predSrcY[n] >> 2);
+    }
+    predSrcY += predSrcY_stride;
+  }
 
-    const Pel *   predSrcY = predBuf.bufs[0].buf;
-    int predSrcY_stride = predBuf.Y().stride;
-    const ClpRng &predSrcY_clpRng = pu.cu->slice->clpRng(COMPONENT_Y);
+  cv::Mat img_predSrcY_8(cv::Size(cu_w, cu_h), CV_8UC1, predSrcY_uchar);
 
-    unsigned char *predSrcY_uchar;
-    predSrcY_uchar = (unsigned char *) xMalloc(unsigned char, cu_h * cu_w);
+  cv::Mat normal_img_predSrcY;
+  img_predSrcY_8.convertTo(normal_img_predSrcY, CV_32FC1, 1.0 / 255, 0);
+
+  vector<c10::IValue> input_tensors_final;
+
+  torch::Tensor input_tensor_pred =
+    torch::from_blob(normal_img_predSrcY.data, { normal_img_predSrcY.rows, normal_img_predSrcY.cols, 1 }, torch::kFloat)
+      .to(m_pTorchHelperBi->device);
+  input_tensor_pred               = input_tensor_pred.unsqueeze(0);                // [1, height, width, channel(1)]
+  input_tensor_pred               = input_tensor_pred.permute({ 0, 3, 1, 2 });    // [info_channel(1), channel(1), height, width]
+  input_tensor_pred               = input_tensor_pred.unsqueeze(0);                // [1, info_channel(1), channel(1), height, width]
+  input_tensors_final.push_back(input_tensor_pred);                                     // [1, info_channel(8), channel(1), height, width]
+
+  try
+  {
+    at::Tensor output_net;
+    try
+    {
+      auto output_net_ = m_pTorchHelperUni->model.forward(input_tensors_final);
+      output_net       = output_net_.toTensor();
+    }
+    catch (const c10::Error &e)
+    {
+      cerr << "error\n";
+    }
+    auto output_tensor = output_net.cpu().detach();
+
+    float *preds;
+    preds = (float *) xMalloc(float, cu_h *cu_w);
+    memcpy(preds, (float *) output_tensor.data_ptr(), sizeof(float) * cu_size);
+
+//    Pel *dstCNN;
+//    dstCNN = (Pel *) xMalloc(Pel, cu_h * cu_w);
+    predSrcY = predBuf.bufs[0].buf;
 
     for (int h = cu_h; h != 0; h--)
     {
       for (int n = 0; n < cu_w; n++)
       {
-        predSrcY_uchar[((cu_h - h) * cu_w) + n] = (unsigned char) (predSrcY[n] >> 2);
+        if (isnan(preds[((cu_h - h) * cu_w) + n]))
+        {
+          Pel temp = 0;
+          predSrcY[n] = temp;
+        }
+        else
+        {
+          Pel temp = (Pel) ClipPel((Pel) (preds[((cu_h - h) * cu_w) + n] * 1023), predSrcY_clpRng);
+          predSrcY[n] = temp;
+        }
       }
       predSrcY += predSrcY_stride;
     }
 
-    cv::Mat img_predSrcY_8(cv::Size(cu_w, cu_h), CV_8UC1, predSrcY_uchar);
-    
-    cv::Mat normal_img_predSrcY;
-    img_predSrcY_8.convertTo(normal_img_predSrcY, CV_32FC1, 1.0 / 255, 0);
+    // >>> test codes
+//    cv::Mat_<uchar> tempImg = cv::Mat(cu_h, cu_w, CV_8UC1);
+//    for (int i = 0; i < cu_h; i++)
+//    {
+//      for (int j = 0; j < cu_w; j++)
+//      {
+//        Pel val = dstCNN[i * cu_w + j] >> 2;
+//        tempImg(i, j) = val;
+//      }
+//    }
+//    cv::Mat tempImg2 = tempImg;
+//    tempImg.release();
+//    tempImg2.release();
+    // <<< test codes
+
+//    auto test = CPelBuf(dstCNN, predSrcY_stride, pu.lumaSize());
+//    predBuf.bufs[0].copyFrom(test);
 
     xFree(predSrcY_uchar);
     img_predSrcY_8.release();
-
-    std::vector<torch::jit::IValue> input_tensors_final;
-
-    torch::Tensor input_tensor_pred =
-      torch::from_blob(normal_img_predSrcY.data, { normal_img_predSrcY.rows, normal_img_predSrcY.cols, 1 }, torch::kFloat)
-        .to(m_pTorchHelperBi->device);
-    input_tensor_pred               = input_tensor_pred.unsqueeze(0); // [1, height, width, channel(1)]
-    input_tensor_pred               = input_tensor_pred.permute({ 0, 3, 1, 2 }); // [info_channel(1), channel(1), height, width]
-    input_tensor_pred               = input_tensor_pred.unsqueeze(0); // [1, info_channel(1), channel(1), height, width]
-    input_tensors_final.push_back(input_tensor_pred);   // [1, info_channel(8), channel(1), height, width]
     normal_img_predSrcY.release();
-
-    try
-    {
-      at::Tensor output_net;
-      try
-      {
-        auto output_net_ = m_pTorchHelperUni->model.forward(input_tensors_final);
-        output_net       = output_net_.toTensor();
-      }
-      catch (const c10::Error &e)
-      {
-        std::cerr << "error\n";
-      }
-      auto output_tensor = output_net.cpu().detach();
-
-      float *preds;
-      preds = (float *) xMalloc(float, cu_h *cu_w);
-      std::memcpy(preds, (float *) output_tensor.data_ptr(), sizeof(float) * cu_size);
-
-      Pel *dstCNN;
-      dstCNN = (Pel *) xMalloc(Pel, cu_h * cu_w);
-
-      for (int h = cu_h; h != 0; h--)
-      {
-        for (int n = 0; n < cu_w; n++)
-        {
-          if (isnan(preds[((cu_h - h) * cu_w) + n]))
-          {
-            Pel temp = 0;
-            dstCNN[((cu_h - h) * cu_w) + n] = temp;
-          }
-          else
-          {
-            Pel temp = (Pel) ClipPel((Pel) (preds[((cu_h - h) * cu_w) + n] * 1023), predSrcY_clpRng);
-            dstCNN[((cu_h - h) * cu_w) + n] = temp;
-          }
-        }
-      }
-
-      predBuf.bufs[0].copyFrom(CPelBuf(dstCNN, predSrcY_stride, pu.lumaSize()));
-
-      xFree(preds);
-      xFree(dstCNN);
-    }
-    catch (...)
-    {
-      std::cerr << "error in forward\n";
-    }
+    xFree(preds);
+//    xFree(dstCNN);
+  }
+  catch (...)
+  {
+    cerr << "error in forward\n";
+  }
     // -----------------------------------------------------------------------------------------------------------------
-  } // Do CNN-based uni-prediction block enhancement
-
-  return;
+//  } // Do CNN-based uni-prediction block enhancement
 }
 
 void InterPrediction::motionCompensation( CodingUnit &cu, const RefPicList &eRefPicList

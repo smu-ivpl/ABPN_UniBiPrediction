@@ -75,6 +75,10 @@ EncApp::~EncApp()
 
 void EncApp::xInitLibCfg()
 {
+  /// yw.lee >>>
+  m_cEncLib.setGPU(m_iGPU);
+  /// <<< yw.lee
+
   VPS& vps = *m_cEncLib.getVPS();
 #if JVET_S0163_ON_TARGETOLS_SUBLAYERS
   if (m_targetOlsIdx != 500)

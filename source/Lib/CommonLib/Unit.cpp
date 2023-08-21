@@ -519,6 +519,10 @@ PredictionUnit::PredictionUnit(const ChromaFormat _chromaFormat, const Area &_ar
 
 void PredictionUnit::initData()
 {
+  // yw.lee >>> CNN flag
+  cnnFlag = false;
+  // <<< yw.lee
+
   // intra data - need this default initialization for PCM
   intraDir[0] = DC_IDX;
   intraDir[1] = PLANAR_IDX;

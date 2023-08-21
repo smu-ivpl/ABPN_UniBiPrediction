@@ -829,9 +829,11 @@ PartSplit CABACReader::split_cu_mode( CodingStructure& cs, Partitioner &partitio
 void CABACReader::coding_unit( CodingUnit &cu, Partitioner &partitioner, CUCtx& cuCtx )
 {
   CodingStructure& cs = *cu.cs;
+
   CHECK_( cu.treeType != partitioner.treeType || cu.modeType != partitioner.modeType, "treeType or modeType mismatch" );
   DTRACE( g_trace_ctx, D_SYNTAX, "coding_unit() treeType=%d modeType=%d\n", cu.treeType, cu.modeType );
   PredictionUnit&    pu = cs.addPU(cu, partitioner.chType);
+
   // skip flag
   if ((!cs.slice->isIntra() || cs.slice->getSPS()->getIBCFlag()) && cu.Y().valid())
   {
@@ -851,6 +853,7 @@ void CABACReader::coding_unit( CodingUnit &cu, Partitioner &partitioner, CUCtx& 
 
   // prediction mode and partitioning data
   pred_mode ( cu );
+
   if (CU::isIntra(cu))
   {
     adaptive_color_transform(cu);
@@ -1223,6 +1226,24 @@ void CABACReader::cu_pred_data( CodingUnit &cu )
   for( auto &pu : CU::traversePUs( cu ) )
   {
     prediction_unit( pu, mrgCtx );
+
+    // yw.lee >>> CNN 플래그 값 수신
+    int pu_w      = pu.Y().width;
+    int pu_h      = pu.Y().height;
+
+    if (((pu_w == 128 && pu_h == 128) || (pu_w == 64 && pu_h == 64) || (pu_w == 32 && pu_h == 32)))
+    {
+      pu.cnnFlag = m_BinDecoder.decodeBinEP();
+
+//      std::cout << "\tcnnFlag: "  << pu.cnnFlag
+//                << std::endl;
+    }
+    std::cout << "\tpu_h: "     << pu_h
+              << "\tpu_w: "     << pu_w
+              << "\tuni: "      << ((pu.refIdx[REF_PIC_LIST_1] < 0 && pu.refIdx[REF_PIC_LIST_0] >= 0) || (pu.refIdx[REF_PIC_LIST_0] < 0 && pu.refIdx[REF_PIC_LIST_1] >= 0))
+              << "\tcnnFlag: "  << pu.cnnFlag
+              << std::endl;
+    // <<< yw.lee
   }
 
   imv_mode   ( cu, mrgCtx );

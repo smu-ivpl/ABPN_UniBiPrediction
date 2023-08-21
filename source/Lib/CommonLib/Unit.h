@@ -383,6 +383,10 @@ struct IntraPredictionData
 
 struct InterPredictionData
 {
+  // yw.lee >>> CNN flag
+  bool cnnFlag;
+  // <<< yw.lee
+
   bool      mergeFlag;
   bool      regularMergeFlag;
   uint8_t     mergeIdx;

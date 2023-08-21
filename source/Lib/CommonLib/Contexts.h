@@ -275,6 +275,10 @@ public:
   static const CtxSet   Alf;
   static const CtxSet   Palette;
 
+  // yw.lee >>>
+  static const CtxSet cnnFlag;
+  // <<< yw.lee
+
 public:
   static const std::vector<uint8_t>&  getInitTable( unsigned initId );
 private:

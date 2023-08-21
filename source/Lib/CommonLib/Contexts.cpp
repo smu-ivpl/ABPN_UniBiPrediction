@@ -881,6 +881,16 @@ const CtxSet ContextSetCfg::TsResidualSign = ContextSetCfg::addCtxSet
 });
 // clang-format on
 
+// yw.lee >>>
+const CtxSet ContextSetCfg::cnnFlag = ContextSetCfg::addCtxSet
+  ({
+    { 1, },
+    { 1, },
+    { 1, },
+    { 0, },
+  });
+// <<< yw.lee
+
 const unsigned ContextSetCfg::NumberOfContexts = (unsigned)ContextSetCfg::sm_InitTables[0].size();
 
 

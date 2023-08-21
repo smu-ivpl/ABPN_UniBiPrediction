@@ -1451,6 +1451,10 @@ bool EncAppCfg::parseCfg( int argc, char* argv[] )
     ("TemporalFilterFutureReference",                 m_gopBasedTemporalFilterFutureReference,   true,            "Enable referencing of future frames in the GOP based temporal filter. This is typically disabled for Low Delay configurations.")
     ("TemporalFilterStrengthFrame*",                  m_gopBasedTemporalFilterStrengths, std::map<int, double>(), "Strength for every * frame in GOP based temporal filter, where * is an integer."
                                                                                                                   " E.g. --TemporalFilterStrengthFrame8 0.95 will enable GOP based temporal filter at every 8th frame with strength 0.95");
+// yw.lee >>>
+  opts.addOptions()
+    ("gpu",                                             m_iGPU,                                          -1, "disable/enable gpu usage and selection");
+// <<< yw.lee
   // clang-format on
 
 #if EXTENSION_360_VIDEO
@@ -3808,6 +3812,17 @@ const char *profileToString(const Profile::Name profile)
 
 void EncAppCfg::xPrintParameter()
 {
+  // yw.lee >>>
+  if (m_iGPU < 0)
+  {
+    msg(DETAILS_, "CNN Device                           : CPU\n");
+  }
+  else
+  {
+    msg(DETAILS_, "CNN Device                           : GPU [%d]\n", m_iGPU);
+  }
+  // <<< yw.lee
+
   //msg( DETAILS_, "\n" );
   msg(DETAILS_, "Input          File                    : %s\n", m_inputFileName.c_str() );
   msg(DETAILS_, "Bitstream      File                    : %s\n", m_bitstreamFileName.c_str() );

@@ -81,6 +81,10 @@ public:
 #endif
 
 protected:
+  // yw.lee >>>
+  int       m_iGPU;                                           /// enable/disable gpu usage and selection
+  // <<< yw.lee
+
   // file I/O
   std::string m_inputFileName;                                ///< source file name
   std::string m_bitstreamFileName;                            ///< output bitstream file

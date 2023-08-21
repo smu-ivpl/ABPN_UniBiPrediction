@@ -21,7 +21,7 @@ public:
   torch::NoGradGuard         no_grad;
 
 public:
-  PyTorchHelper(string fpath, bool useGpu, int nGpu);
+  PyTorchHelper(string fpath, int nGpu);
 
   template<typename... Args> string format_string(const string &format, Args... args)
   {

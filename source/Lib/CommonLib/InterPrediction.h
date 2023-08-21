@@ -202,6 +202,9 @@ public:
   bool isLumaBvValid(const int ctuSize, const int xCb, const int yCb, const int width, const int height, const int xBv, const int yBv);
 
   bool xPredInterBlkRPR( const std::pair<int, int>& scalingRatio, const PPS& pps, const CompArea &blk, const Picture* refPic, const Mv& mv, Pel* dst, const int dstStride, const bool bi, const bool wrapRef, const ClpRng& clpRng, const int filterIndex, const bool useAltHpelIf = false );
+
+    void xEnhanceUniPredictionWithCNN(PredictionUnit &pu, PelUnitBuf &predBuf);
+  bool xCheckUniCondition(PredictionUnit &pu) const;
 };
 
 //! \}

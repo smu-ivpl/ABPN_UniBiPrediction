@@ -157,6 +157,10 @@ std::istringstream &operator>>(std::istringstream &in, GOPEntry &entry);     //i
 class EncCfg
 {
 protected:
+  // yw.lee >>>
+  int m_iGPU;
+  // <<< yw.lee
+
   //==== File I/O ========
   int       m_iFrameRate;
   int       m_FrameSkip;
@@ -775,6 +779,11 @@ public:
 
   virtual ~EncCfg()
   {}
+
+  /// yw.lee >>>
+  void  setGPU(int nGPU)  { m_iGPU = nGPU; }
+  int   getGPU() const { return m_iGPU; }
+  /// <<< yw.lee
 
   void setProfile(Profile::Name profile) { m_profile = profile; }
   void setLevel(Level::Tier tier, Level::Name level) { m_levelTier = tier; m_level = level; }

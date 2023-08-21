@@ -519,6 +519,17 @@ void DecLib::init(
   m_cInterPred.cacheAssign( &m_cacheModel );
 #endif
   DTRACE_UPDATE( g_trace_ctx, std::make_pair( "final", 1 ) );
+
+  // yw.lee >>> 파이토치 모델을 미리 로드해둔다.
+//  bool useGpu = true; // CPU 또는 GPU 사용
+  int nGpu = 1;       // GPU 번호 선택 0, 1, 2, 3 ...
+  this->m_pTorchHelperBi = new PyTorchHelper("../model/bi_prediction_abpn_one_t.pt", nGpu);
+  this->m_pTorchHelperUni = new PyTorchHelper("../model/uni_prediction_aupn_one_predonly.pt", nGpu);
+
+  // inter-prediction 객체에 전달
+  m_cInterPred.m_pTorchHelperBi = this->m_pTorchHelperBi;
+  m_cInterPred.m_pTorchHelperUni = this->m_pTorchHelperUni;
+  // <<< yw.lee
 }
 
 void DecLib::deletePicBuffer ( )

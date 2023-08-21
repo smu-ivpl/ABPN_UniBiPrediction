@@ -67,6 +67,12 @@ bool tryDecodePicture( Picture* pcPic, const int expectedPoc, const std::string&
 /// decoder class
 class DecLib
 {
+  // yw.lee >>> 파이토치 모델 포인터
+public:
+  PyTorchHelper *m_pTorchHelperUni = nullptr;
+  PyTorchHelper *m_pTorchHelperBi = nullptr;
+  // <<< yw.lee
+
 private:
   int                     m_iMaxRefPicNum;
   bool m_isFirstGeneralHrd;
